@@ -28,6 +28,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { getOrganizations, formatOrganizationData, updateOrganizationStatus } from '@/app/api/organizations/OrganizationData';
+import OrganizationFilter from './OrganizationFilter';
 
 const OrganizationListing = () => {
   const router = useRouter();
@@ -172,10 +173,16 @@ const OrganizationListing = () => {
   };
 
   const filteredOrganizations = organizations.filter(org => {
-    const matchesSearch = org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         org.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' || org.status === filter;
-    return matchesSearch && matchesFilter;
+    const matchesSearch = 
+      org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      org.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Special handling for 'pending' filter
+    if (filter === 'pending') {
+      return matchesSearch && !['approved', 'rejected'].includes(org.status);
+    }
+    
+    return matchesSearch && (filter === 'all' || org.status === filter);
   });
 
   if (loading) return <Typography>Chargement...</Typography>;
@@ -183,13 +190,15 @@ const OrganizationListing = () => {
 
   return (
     <Box mt={4}>
-      <Box display="flex" justifyContent="space-between" mb={3}>
+      <OrganizationFilter onFilterChange={handleFilterChange} />
+      
+      <Box display="flex" justifyContent="space-between" mb={3} mt={4}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Filtrer</InputLabel>
           <Select
             value={filter}
             label="Filtrer"
-            onChange={(e) => handleFilterChange(e.target.value)}
+            onChange={handleFilterChange}
           >
             <MenuItem value="all">Toutes les organisations</MenuItem>
             <MenuItem value="pending">En attente</MenuItem>

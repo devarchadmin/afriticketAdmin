@@ -52,7 +52,7 @@ export function formatOrganizationData(organizations) {
       email: org.email,
       phone: org.phone,
       description: org.description,
-      status: org.user.status,
+      status: org.status,
       events_count: stats.total_events,
       fundraisings_count: stats.total_fundraisings,
       registration_date: stats.registration_date,
@@ -69,8 +69,9 @@ export async function getOrganization(id) {
       throw new Error('Authentication required');
     }
 
+    // First get the organizations list and find the specific one
     const response = await fetch(
-      `${API_BASE_URL}/admin/organizations/${id}`,
+      `${API_BASE_URL}/admin/organizations`,
       {
         method: 'GET',
         headers: {
@@ -87,8 +88,28 @@ export async function getOrganization(id) {
 
     const result = await response.json();
     
-    if (result.status === 'success') {
-      return result.data;
+    if (result.status === 'success' && result.data.data) {
+      const organizationData = result.data.data.find(item => item.organization.id === parseInt(id));
+      
+      if (!organizationData) {
+        throw new Error('Organization not found');
+      }
+
+      const org = organizationData.organization;
+      const stats = organizationData.stats;
+      
+      return {
+        id: org.id,
+        name: org.name,
+        email: org.email,
+        phone: org.phone,
+        description: org.description,
+        status: org.status,
+        events_count: stats.total_events,
+        fundraisings_count: stats.total_fundraisings,
+        registration_date: stats.registration_date,
+        user: org.user,
+      };
     } else {
       throw new Error(result.message || 'Failed to fetch organization');
     }

@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns'; // Only import this once
 import { fr } from 'date-fns/locale'; // Import the French locale
@@ -22,9 +22,10 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import { useTheme } from '@mui/material/styles';
-import { fetchEvents, DeleteEvent, getVisibleEvents, setSelectedOrganization } from '@/store/apps/events/EventsSlice';
-import { IconTrash, IconEdit } from '@tabler/icons-react';
+import { fetchEvents, DeleteEvent, getVisibleEvents, setSelectedOrganization, handleApproveEvent, handleRejectEvent } from '@/store/apps/events/EventsSlice';
+import { IconTrash, IconEdit, IconCheck, IconX } from '@tabler/icons-react';
 import EventAdd from './EventAdd';
+import RejectDialog from './RejectDialog';
 import { useRouter } from 'next/navigation';
 
 const organizations = {
@@ -41,6 +42,8 @@ const EventsListing = () => {
   const theme = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [eventToReject, setEventToReject] = useState(null);
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
 
@@ -95,8 +98,16 @@ const EventsListing = () => {
   };
 
   const getStatusColor = (status) => {
-    return status === 'active' ? 'success' : 'error';
+    const statusColors = {
+      'active': 'success',
+      'pending': 'warning',
+      'completed': 'default',
+      'rejected': 'error'
+    };
+    return statusColors[status] || 'default';
   };
+
+  
 
   const startIndex = (page - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
@@ -182,7 +193,7 @@ const EventsListing = () => {
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Avatar 
-                      src={event.organization?.logo} 
+                      // src={event.organization?.logo} 
                       sx={{ width: 30, height: 30 }}
                     />
                     <Typography variant="subtitle2">
@@ -225,7 +236,7 @@ const EventsListing = () => {
                 </TableCell>
                 <TableCell>
                   <Chip 
-                    label={event.status === 'active' ? 'Active' : 'Completed'}
+                    label={event.status}
                     color={getStatusColor(event.status)}
                     size="small"
                   />
@@ -246,17 +257,43 @@ const EventsListing = () => {
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Tooltip title="Update Event">
-                      <IconButton onClick={() => handleUpdateEvent(event.Id)} >
-                        <IconEdit size="20" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Event">
-                      <IconButton onClick={() => handleDeleteEvent(event.Id)} >
-                        <IconTrash size="20" />
-                      </IconButton>
-                    </Tooltip>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    {event.status === 'pending' ? (
+                      <>
+                        <Tooltip title="Approve Event">
+                          <IconButton 
+                            color="success"
+                            onClick={() => dispatch(handleApproveEvent(event.Id))}
+                          >
+                            <IconCheck size="20" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Reject Event">
+                          <IconButton 
+                            color="error"
+                            onClick={() => {
+                              setEventToReject(event);
+                              setRejectDialogOpen(true);
+                            }}
+                          >
+                            <IconX size="20" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <>
+                        <Tooltip title="Update Event">
+                          <IconButton onClick={() => handleUpdateEvent(event.Id)} >
+                            <IconEdit size="20" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Event">
+                          <IconButton onClick={() => handleDeleteEvent(event.Id)} >
+                            <IconTrash size="20" />
+                          </IconButton>
+                        </Tooltip>
+                      </>
+                    )}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -272,6 +309,22 @@ const EventsListing = () => {
           color="primary" 
         />
       </Box>
+
+      <RejectDialog 
+        open={rejectDialogOpen}
+        onClose={() => {
+          setRejectDialogOpen(false);
+          setEventToReject(null);
+        }}
+        onConfirm={async (reason) => {
+          if (eventToReject) {
+            return dispatch(handleRejectEvent(eventToReject.Id, reason)).then(() => {
+              setRejectDialogOpen(false);
+              setEventToReject(null);
+            });
+          }
+        }}
+      />
     </Box>
   );
 };

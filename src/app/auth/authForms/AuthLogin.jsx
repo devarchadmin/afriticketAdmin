@@ -51,10 +51,22 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       const data = await response.json();
       if (data.status === 'success') {
-        // Store the token in cookies
-        Cookies.set('token', data.token);
-        // Store user data if needed
+        console.log('Login response:', data); // Debug log
+
+        // Check if user is an admin
+        if (data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
+          // Store admin token in localStorage
+          localStorage.setItem('adminToken', data.token);
+          console.log('Admin token stored'); // Debug log
+        }
+        
+        // Store the token in localStorage
+        localStorage.setItem('token', data.token);
+        console.log('Token stored'); // Debug log
+        
+        // Store user data
         localStorage.setItem('user', JSON.stringify(data.user));
+        
         // Redirect to dashboard
         router.push('/');
       } else {

@@ -36,6 +36,12 @@ const Menuitems = [
     icon: IconMoneybag,
     href: '/fund',
   },
+  {
+    id: uniqueId(),
+    title: 'Fonds en attente',
+    icon: IconMoneybag,
+    href: '/fund/pending',
+  },
 
   {
     id: uniqueId(),

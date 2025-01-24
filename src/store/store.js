@@ -9,6 +9,7 @@ import EmailReducer from './apps/email/EmailSlice';
 import TicketReducer from './apps/tickets/TicketSlice';
 import EventReducer from './apps/events/EventsSlice';
 import FundReducer from './apps/fund/FundSlice';
+import FundsReducer from './apps/funds/FundsSlice';
 import PaymentReducer from './apps/payment/PaymentSlice';
 import ContactsReducer from './apps/contacts/ContactSlice';
 import EcommerceReducer from './apps/eCommerce/EcommerceSlice';
@@ -34,6 +35,7 @@ export const store = configureStore({
     ticketReducer: TicketReducer,
     eventReducer: EventReducer,
     fundReducer: FundReducer,
+    fundsReducer: FundsReducer,
     paymentReducer: PaymentReducer,
     userpostsReducer: UserProfileReducer,
     blogReducer: BlogReducer,

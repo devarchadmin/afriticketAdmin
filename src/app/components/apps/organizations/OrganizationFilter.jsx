@@ -1,10 +1,10 @@
 'use client'
+import { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
-import { useDispatch, useSelector } from 'react-redux';
-import { setVisibilityFilter } from '@/store/apps/organization/OrganizationSlice';
+import { getOrganizations, formatOrganizationData } from '@/app/api/organizations/OrganizationData';
 
 const BoxStyled = styled(Box)(() => ({
   padding: '30px',
@@ -16,40 +16,56 @@ const BoxStyled = styled(Box)(() => ({
   },
 }));
 
-const OrganizationFilter = () => {
-  const dispatch = useDispatch();
-  const organizations = useSelector((state) => state.organizationReducer?.organizations || []);
-  
+const OrganizationFilter = ({ onFilterChange }) => {
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const data = await getOrganizations();
+        const formattedData = formatOrganizationData(data.data);
+        setOrganizations(formattedData);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
+
   const totalOrganizations = organizations.length;
-  const pendingOrganizations = organizations.filter(org => org.status === 'pending').length;
-  const verifiedOrganizations = organizations.filter(org => org.status === 'verified').length;
+  const pendingOrganizations = organizations.filter(org => !['approved', 'rejected'].includes(org.status)).length;
+  const verifiedOrganizations = organizations.filter(org => org.status === 'approved').length;
 
   return (
     <Grid container spacing={3} textAlign="center">
       <Grid item xs={12} md={4}>
         <BoxStyled
-          onClick={() => dispatch(setVisibilityFilter('all_organizations'))}
+          onClick={() => onFilterChange('all')}
           sx={{ backgroundColor: 'primary.light', color: 'primary.main' }}
         >
-          <Typography variant="h3">{totalOrganizations}</Typography>
+          <Typography variant="h3">{loading ? '...' : totalOrganizations}</Typography>
           <Typography variant="h6">Total des organisations</Typography>
         </BoxStyled>
       </Grid>
       <Grid item xs={12} md={4}>
         <BoxStyled
-          onClick={() => dispatch(setVisibilityFilter('pending_verification'))}
+          onClick={() => onFilterChange('pending')}
           sx={{ backgroundColor: 'warning.light', color: 'warning.main' }}
         >
-          <Typography variant="h3">{pendingOrganizations}</Typography>
+          <Typography variant="h3">{loading ? '...' : pendingOrganizations}</Typography>
           <Typography variant="h6">Organisations en attente</Typography>
         </BoxStyled>
       </Grid>
       <Grid item xs={12} md={4}>
         <BoxStyled
-          onClick={() => dispatch(setVisibilityFilter('verified_organizations'))}
+          onClick={() => onFilterChange('approved')}
           sx={{ backgroundColor: 'success.light', color: 'success.main' }}
         >
-          <Typography variant="h3">{verifiedOrganizations}</Typography>
+          <Typography variant="h3">{loading ? '...' : verifiedOrganizations}</Typography>
           <Typography variant="h6">Organisations vérifiées</Typography>
         </BoxStyled>
       </Grid>

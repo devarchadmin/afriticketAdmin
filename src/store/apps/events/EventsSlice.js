@@ -1,7 +1,9 @@
-import axios from '../../../utils/axios';
+import axiosServices from '../../../utils/axios';
 import { createSlice } from '@reduxjs/toolkit';
 
-const API_URL = 'https://api.afrikticket.com/api/events';
+const EVENTS_URL = 'https://api.afrikticket.com/api/events';
+const PENDING_EVENTS_URL = 'https://api.afrikticket.com/api/admin/pending/events';
+const REVIEW_EVENT_URL = 'https://api.afrikticket.com/api/admin/events';
 
 const initialState = {
   events: [],
@@ -9,6 +11,28 @@ const initialState = {
   eventSearch: '',
   selectedOrganization: 'all'
 };
+
+const mapEventData = (event) => ({
+  Id: event?.id || '',
+  organizationId: event?.organization?.id || '',
+  organization: {
+    name: event?.organization?.name,
+    logo: event?.organization?.logo || '/images/logos/logo-afrik-ticket.webp',
+    email: event?.organization?.email || '',
+    phone: event?.organization?.phone || '',
+  },
+  ticketTitle: event?.title || '',
+  ticketDescription: event?.description || '',
+  location: event?.location || '',
+  Date: event?.date ? new Date(event.date) : new Date(),
+  duration: event?.duration || '',
+  numberOfTickets: event?.max_tickets || 0,
+  ticketPrice: parseFloat(event?.price) || 0,
+  deleted: false,
+  status: event?.status || 'active',
+  createdAt: event?.created_at || '',
+  updatedAt: event?.updated_at || '',
+});
 
 export const EventSlice = createSlice({
   name: 'event',
@@ -39,6 +63,18 @@ export const EventSlice = createSlice({
         state.events[index] = action.payload;
       }
     },
+    ApproveEvent: (state, action) => {
+      const index = state.events.findIndex((event) => event.Id === action.payload);
+      if (index !== -1) {
+        state.events[index].status = 'active';
+      }
+    },
+    RejectEvent: (state, action) => {
+      const index = state.events.findIndex((event) => event.Id === action.payload);
+      if (index !== -1) {
+        state.events[index].status = 'rejected';
+      }
+    },
   },
 });
 
@@ -49,34 +85,89 @@ export const {
   DeleteEvent,
   AddEvent,
   UpdateEvent,
-  setSelectedOrganization
+  setSelectedOrganization,
+  ApproveEvent,
+  RejectEvent
 } = EventSlice.actions;
 
-export const fetchEvents = () => async (dispatch) => {
+const getHeaders = () => {
+  const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  };
+};
+
+const handleEventReview = async (dispatch, eventId, status, reason = '') => {
+  const headers = getHeaders();
   try {
-    const response = await axios.get(API_URL);
-    const formattedEvents = response.data.data.map(event => ({
-      Id: event.id,
-      organizationId: event.organization.id,
-      organization: {
-        name: event.organization.name,
-        logo: event.organization.logo || '/images/organizations/default.jpg'
-      },
-      ticketTitle: event.title,
-      ticketDescription: event.description,
-      location: event.location,
-      Date: new Date(event.start_date),
-      duration: event.duration,
-      numberOfTickets: event.remaining_tickets,
-      ticketPrice: event.price,
-      deleted: false,
-      status: new Date(event.end_date) < new Date() ? 'completed' : 'active',
-      images: [event.image]
-    }));
-    dispatch(getEvents(formattedEvents));
-  } catch (err) {
-    console.error('Error fetching events:', err);
-    throw err;
+    const payload = status === 'active' 
+      ? { status: 'active' } 
+      : { status: 'rejected', reason };
+
+    if (!reason && status === 'rejected') {
+      throw new Error('Reason is required for rejection');
+    }
+
+    await axiosServices.put(`${REVIEW_EVENT_URL}/${eventId}/review`, payload, { headers });
+    
+    if (status === 'active') {
+      dispatch(ApproveEvent(eventId));
+    } else {
+      dispatch(RejectEvent(eventId));
+    }
+    dispatch(fetchEvents()); // Refresh the events list
+  } catch (error) {
+    console.error(`Event review failed:`, error);
+    throw error;
+  }
+};
+
+export const handleApproveEvent = (eventId) => async (dispatch) => {
+  return handleEventReview(dispatch, eventId, 'active');
+};
+
+export const handleRejectEvent = (eventId, reason) => async (dispatch) => {
+  return handleEventReview(dispatch, eventId, 'rejected', reason);
+};
+
+export const fetchEvents = () => async (dispatch) => {
+  const headers = getHeaders();
+  try {
+    const eventsResponse = await axiosServices.get(EVENTS_URL);
+    const formattedEvents = Array.isArray(eventsResponse?.data?.data) 
+      ? eventsResponse.data.data.map(mapEventData)
+      : [];
+
+    try {
+      const pendingResponse = await axiosServices.get(PENDING_EVENTS_URL, { headers });
+      
+      let pendingEvents = [];
+      if (pendingResponse?.data?.status === 'success' && pendingResponse?.data?.data?.data) {
+        // Extract events from paginated response
+        const pendingData = pendingResponse.data.data.data;
+        pendingEvents = Array.isArray(pendingData) 
+          ? pendingData.map(event => ({
+              ...mapEventData(event),
+              status: 'pending'
+            }))
+          : [];
+      }
+
+      dispatch(getEvents([...formattedEvents, ...pendingEvents]));
+
+    } catch (pendingError) {
+      console.error('Pending events error:', {
+        message: pendingError.message,
+        status: pendingError.response?.status,
+        data: pendingError.response?.data
+      });
+      dispatch(getEvents(formattedEvents));
+    }
+  } catch (error) {
+    console.error('Events fetch failed:', error);
+    dispatch(getEvents([]));
   }
 };
 
@@ -117,7 +208,7 @@ export const getVisibleEvents = (events, filter, eventSearch, selectedOrganizati
       );
 
     default:
-      throw new Error(`Unknown filter: ${filter}`);
+      throw new Error("Unknown filter: ${filter}");
   }
 };
 
