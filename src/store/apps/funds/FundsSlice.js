@@ -1,13 +1,13 @@
-import axiosServices from '../../../utils/axios';
+import axiosServices, { getStorageItem } from '../../../utils/axios';
 import { createSlice } from '@reduxjs/toolkit';
 
-const FUNDS_URL = 'https://api.afrikticket.com/api/funds';
+const FUNDS_URL = 'https://api.afrikticket.com/api/fundraising';
 const PENDING_FUNDS_URL = 'https://api.afrikticket.com/api/admin/pending/fundraisings';
 const REVIEW_FUND_URL = 'https://api.afrikticket.com/api/admin/fundraisings';
 
 // Check store for active admin session
 const checkAdminSession = () => {
-  const adminToken = localStorage.getItem('adminToken');
+  const adminToken = getStorageItem('adminToken');
   if (!adminToken) {
     throw new Error('Admin authentication required');
   }
@@ -17,20 +17,30 @@ const checkAdminSession = () => {
 const initialState = {
   pendingFunds: [],
   fundsSearch: '',
-  allFunds: []
+  allFunds: [],
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0
+  }
 };
 
-const mapFundData = (fund) => ({
-  id: fund?.id || '',
-  title: fund?.title || '',
-  description: fund?.description || '',
-  goal: parseFloat(fund?.goal) || 0,
-  currentAmount: parseFloat(fund?.current) || 0,
-  status: fund?.status || 'pending',
-  created_at: fund?.created_at || '',
-  updated_at: fund?.updated_at || '',
-  organization: fund?.organization || null
-});
+const mapFundData = (fund) => {
+  // Add debug logging
+  console.log('Raw fund data:', JSON.stringify(fund, null, 2));
+  
+  return {
+    id: fund?.id || '',
+    title: fund?.title || '',
+    description: fund?.description || '',
+    goal: parseFloat(fund?.goal) || 0,
+    currentAmount: parseFloat(fund?.current) || 0,
+    status: fund?.status || 'pending',
+    created_at: fund?.created_at || '',
+    updated_at: fund?.updated_at || '',
+    organization: fund?.organization || null
+  };
+};
 
 export const FundsSlice = createSlice({
   name: 'funds',
@@ -38,6 +48,9 @@ export const FundsSlice = createSlice({
   reducers: {
     setPendingFunds: (state, action) => {
       state.pendingFunds = action.payload;
+    },
+    setPagination: (state, action) => {
+      state.pagination = action.payload;
     },
     setAllFunds: (state, action) => {
       state.allFunds = action.payload;
@@ -71,6 +84,7 @@ export const FundsSlice = createSlice({
 
 export const {
   setPendingFunds,
+  setPagination,
   setAllFunds,
   SearchFunds,
   ApproveFund,
@@ -88,6 +102,11 @@ const handleFundReview = async (dispatch, fundId, status, reason = '') => {
     if (!reason && status === 'rejected') {
       throw new Error('Reason is required for rejection');
     }
+
+    console.log('Review request:', {
+      url: `${REVIEW_FUND_URL}/${fundId}/review`,
+      payload
+    });
 
     await axiosServices.put(`${REVIEW_FUND_URL}/${fundId}/review`, payload);
     
@@ -111,34 +130,39 @@ export const handleRejectFund = (fundId, reason) => async (dispatch) => {
   return handleFundReview(dispatch, fundId, 'rejected', reason);
 };
 
-export const fetchPendingFunds = () => async (dispatch) => {
-  console.log('Fetching pending funds...');
-  console.log('URL:', `${PENDING_FUNDS_URL}?per_page=100`);
+export const fetchPendingFunds = (page = 1) => async (dispatch) => {
+  console.log('Fetching pending funds for page:', page);
+  console.log('URL:', `${PENDING_FUNDS_URL}?page=${page}`);
   
   try {
     // Verify admin session first
     checkAdminSession();
     
     console.log('Making API request...');
-    const response = await axiosServices.get(`${PENDING_FUNDS_URL}?per_page=100`);
+    const response = await axiosServices.get(`${PENDING_FUNDS_URL}?page=${page}`);
     
-    console.log('API Response received:', response);
-    console.log('Response status:', response?.data?.status);
-    console.log('Response data:', response?.data);
+    console.log('API Response received:', response.data);
     
-    if (response?.data?.status === 'success' && response?.data?.data) {
-      const pendingData = response.data.data;
-      console.log('Pending data before mapping:', pendingData);
+    if (response?.data?.status === 'success' && response.data.data) {
+      const paginatedData = response.data.data;
       
-      const funds = Array.isArray(pendingData) 
-        ? pendingData.map(fund => {
-            console.log('Mapping fund:', fund);
-            return mapFundData(fund);
-          })
-        : [];
+      // Update pagination info
+      dispatch(setPagination({
+        currentPage: paginatedData.current_page || 1,
+        totalPages: paginatedData.last_page || 1,
+        totalItems: paginatedData.total || 0
+      }));
       
-      console.log('Mapped funds:', funds);
-      dispatch(setPendingFunds(funds));
+      // Map the funds data
+      if (Array.isArray(paginatedData.data)) {
+        console.log('Mapping funds from paginated data:', paginatedData.data);
+        const funds = paginatedData.data.map(mapFundData);
+        console.log('Mapped funds:', funds);
+        dispatch(setPendingFunds(funds));
+      } else {
+        console.error('No array data in paginated response:', paginatedData);
+        dispatch(setPendingFunds([]));
+      }
     } else {
       console.log('No valid data in response, setting empty array');
       dispatch(setPendingFunds([]));

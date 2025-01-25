@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getStorageItem } from '../../../utils/axios';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -53,22 +54,32 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       if (data.status === 'success') {
         console.log('Login response:', data); // Debug log
 
-        // Check if user is an admin
+        // Store tokens in both localStorage and cookies
         if (data.user && (data.user.role === 'admin' || data.user.role === 'super_admin')) {
-          // Store admin token in localStorage
           localStorage.setItem('adminToken', data.token);
-          console.log('Admin token stored'); // Debug log
+          Cookies.set('adminToken', data.token, { expires: 7 });
+          console.log('Admin token stored');
         }
         
-        // Store the token in localStorage
         localStorage.setItem('token', data.token);
-        console.log('Token stored'); // Debug log
+        Cookies.set('token', data.token, { expires: 7 });
+        console.log('Token stored');
         
-        // Store user data
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        // Redirect to dashboard
-        router.push('/');
+        // Verify tokens before redirect
+        const verifyToken = Cookies.get('token');
+        console.log('Verifying tokens before redirect:', {
+          cookie: verifyToken ? 'present' : 'missing',
+          storage: getStorageItem('token') ? 'present' : 'missing'
+        });
+        
+        if (verifyToken) {
+          // Force a hard reload to ensure all components pick up the new token
+          window.location.href = '/';
+        } else {
+          setError('Error storing authentication tokens. Please try again.');
+        }
       } else {
         setError(data.message || 'Identifiants incorrects. Veuillez vérifier votre email et mot de passe.');
       }

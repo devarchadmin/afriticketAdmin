@@ -1,4 +1,4 @@
-import axiosServices from '../../../utils/axios';
+import axiosServices, { getStorageItem } from '../../../utils/axios';
 import { createSlice } from '@reduxjs/toolkit';
 
 const EVENTS_URL = 'https://api.afrikticket.com/api/events';
@@ -91,7 +91,7 @@ export const {
 } = EventSlice.actions;
 
 const getHeaders = () => {
-  const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+  const token = getStorageItem('adminToken') || getStorageItem('token');
   return {
     'Authorization': `Bearer ${token}`,
     'Accept': 'application/json',

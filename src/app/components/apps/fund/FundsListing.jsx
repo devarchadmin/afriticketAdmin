@@ -144,7 +144,7 @@ const FundsListing = () => {
                 <CardMedia
                   component="img"
                   height="200"
-                  image={fund.images[0]}
+                  image={`https://api.afrikticket.com/storage/${fund.images[0]}`}
                   alt={fund.title}
                   sx={{ borderRadius: '5px' }}
                 />

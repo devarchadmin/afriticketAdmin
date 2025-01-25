@@ -32,18 +32,22 @@ import FundAdd from './FundAdd';
 const PendingFundListing = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const [page, setPage] = useState(1);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [fundToReject, setFundToReject] = useState(null);
   const [selectedOrganization, setSelectedOrganization] = useState('all');
   const [fundDialogOpen, setFundDialogOpen] = useState(false);
   const [selectedFund, setSelectedFund] = useState(null);
-  const rowsPerPage = 10;
+
+  // Get pagination info from Redux
+  const { currentPage, totalPages, totalItems } = useSelector(
+    (state) => state.fundsReducer.pagination
+  );
 
   useEffect(() => {
     dispatch(fetchPendingFunds());
-  }, [dispatch]);
+  }, [dispatch, currentPage]); // Refetch when page changes
 
+  // Get funds from Redux
   const funds = useSelector((state) => {
     const allFunds = state.fundsReducer.pendingFunds || [];
     if (selectedOrganization === 'all') return allFunds;
@@ -63,12 +67,17 @@ const PendingFundListing = () => {
   });
 
   const handlePageChange = (event, newPage) => {
-    setPage(newPage);
+    // Reset to page 1 on org change
+    if (selectedOrganization !== 'all') {
+      dispatch(fetchPendingFunds(1));
+    } else {
+      dispatch(fetchPendingFunds(newPage));
+    }
   };
 
   const handleOrganizationChange = (event) => {
     setSelectedOrganization(event.target.value);
-    setPage(1);
+    dispatch(fetchPendingFunds(1)); // Reset to first page when changing organization
   };
 
   const handleCreateFund = () => {
@@ -86,9 +95,6 @@ const PendingFundListing = () => {
     return statusColors[status] || 'default';
   };
 
-  const startIndex = (page - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedFunds = funds.slice(startIndex, endIndex);
 
   const handleFundClick = (fundId) => {
     router.push(`/fund/${fundId}`);
@@ -153,7 +159,7 @@ const PendingFundListing = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedFunds.map((fund) => (
+            {funds.map((fund) => (
               <TableRow key={fund.id} hover>
                 <TableCell>{fund.id}</TableCell>
                 <TableCell>
@@ -239,10 +245,13 @@ const PendingFundListing = () => {
         </Table>
       </TableContainer>
 
-      <Box mt={3} display="flex" justifyContent="center">
+      <Box mt={3} display="flex" alignItems="center" justifyContent="space-between" px={2}>
+        <Typography variant="body2" color="textSecondary">
+          Total: {totalItems} fonds
+        </Typography>
         <Pagination 
-          count={Math.ceil(funds.length / rowsPerPage)} 
-          page={page}
+          count={totalPages} 
+          page={currentPage}
           onChange={handlePageChange}
           color="primary" 
         />

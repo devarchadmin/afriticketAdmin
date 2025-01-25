@@ -1,24 +1,51 @@
- import axios from 'axios';
+import axios from 'axios';
 
 const axiosServices = axios.create();
 
+// Helper function to safely access tokens from localStorage or cookies
+export const getStorageItem = (key) => {
+  if (typeof window !== 'undefined') {
+    // Try localStorage first
+    const localValue = localStorage.getItem(key);
+    if (localValue) return localValue;
+    
+    // Fallback to cookies
+    const Cookies = require('js-cookie');
+    return Cookies.get(key);
+  }
+  return null;
+};
+
 // Debug function to check token status
 const debugTokens = () => {
-  const adminToken = localStorage.getItem('adminToken');
-  const token = localStorage.getItem('token');
-  console.log('Debug - Tokens:', {
+  const adminToken = getStorageItem('adminToken');
+  const token = getStorageItem('token');
+  
+  const tokenInfo = {
     adminToken: adminToken ? 'present' : 'missing',
-    token: token ? 'present' : 'missing'
+    token: token ? 'present' : 'missing',
+    adminTokenValue: adminToken ? `${adminToken.substring(0, 10)}...` : null,
+    tokenValue: token ? `${token.substring(0, 10)}...` : null
+  };
+  
+  console.log('Debug - Authentication:', {
+    tokens: tokenInfo,
+    storage: typeof window !== 'undefined' ? 'available' : 'unavailable',
+    cookies: typeof window !== 'undefined' ? document.cookie : 'unavailable'
   });
+  
+  return tokenInfo;
 };
 
 // Add request interceptor to attach the token
-debugTokens(); // Initial debug check
 axiosServices.interceptors.request.use(
     (config) => {
+        // Debug token status at request time
+        debugTokens();
+
         // For admin endpoints, use adminToken first
-        const adminToken = localStorage.getItem('adminToken');
-        const token = localStorage.getItem('token');
+        const adminToken = getStorageItem('adminToken');
+        const token = getStorageItem('token');
         
         console.log('Request URL:', config.url);
         console.log('Admin token:', adminToken ? 'present' : 'missing');
@@ -31,19 +58,35 @@ axiosServices.interceptors.request.use(
             'Content-Type': 'application/json'
         };
 
-        // Add authorization header
+        // Add authorization header according to API docs
+        // Format: "Authorization: Bearer <token>"
         if (config.url?.includes('/api/admin')) {
             if (adminToken) {
-                config.headers.Authorization = `Bearer ${adminToken}`;
+                config.headers = {
+                    ...config.headers,
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Accept': 'application/json'
+                };
                 console.log('Using admin token for request');
             } else {
                 console.warn('Admin token missing for admin endpoint');
                 throw new Error('Admin authentication required');
             }
         } else if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            };
             console.log('Using regular token for request');
         }
+
+        // Log the final request configuration
+        console.log('Request config:', {
+            url: config.url,
+            method: config.method,
+            headers: config.headers
+        });
 
         console.log('Final headers:', config.headers);
         return config;
@@ -61,10 +104,29 @@ axiosServices.interceptors.response.use(
     (error) => {
         console.error('API Error:', {
             status: error.response?.status,
+            statusText: error.response?.statusText,
             data: error.response?.data,
-            message: error.message
+            message: error.message,
+            url: error.config?.url,
+            method: error.config?.method,
+            headers: error.config?.headers
         });
-        return Promise.reject((error.response && error.response.data) || 'Wrong Services');
+
+        // Check for specific error types
+        if (error.response?.status === 401) {
+            console.error('Authentication error - clearing tokens');
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('adminToken');
+                window.location.href = '/auth/login';
+            }
+        }
+
+        return Promise.reject({
+            status: error.response?.status,
+            message: error.response?.data?.message || error.message,
+            data: error.response?.data
+        });
     }
 );
 
