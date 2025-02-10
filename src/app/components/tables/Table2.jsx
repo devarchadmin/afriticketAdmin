@@ -23,11 +23,11 @@ import { IconDotsVertical, IconEdit, IconPlus, IconTrash } from '@tabler/icons-r
 const rows = [
   {
     status: 'active',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     name: 'Olivia Rhye',
     project: 'Xtreme admin',
     percent: 60,
-    users: [{ img: '/images/profile/user-1.jpg' }, { img: '/images/profile/user-2.jpg' }],
+    users: [{ img: '/images/profile/user-default.jpg' }, { img: '/images/profile/user-2.jpg' }],
   },
   {
     status: 'cancel',
@@ -36,7 +36,7 @@ const rows = [
     project: 'Adminpro admin',
     percent: 30,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-3.jpg' },
     ],
@@ -56,7 +56,7 @@ const rows = [
     project: 'Materialpro admin',
     percent: 37,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-5.jpg' },
     ],

@@ -1,6 +1,7 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { fetchUserDonationsForFund } from '@/app/api/fund/FundData';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
@@ -27,34 +28,12 @@ import {
   IconChevronRight,
   IconDownload,
   IconClock,
-  IconShare
+  IconShare,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import BlankCard from '@/app/components/shared/BlankCard';
+import Tooltip from '@mui/material/Tooltip';
 
-const sampleDonations = [
-  {
-    id: 1,
-    donationDate: new Date('2024-01-15'),
-    donorName: "John Doe",
-    email: "john.doe@example.com",
-    amount: 500,
-    message: "Keep up the great work!",
-    status: "Completed",
-    avatar: "/images/profile/user-1.jpg",
-    anonymous: false
-  },
-  {
-    id: 2,
-    donationDate: new Date('2024-01-16'),
-    donorName: "Anonymous Donor",
-    email: "anonymous@example.com",
-    amount: 1000,
-    message: "Happy to support this cause",
-    status: "Completed",
-    avatar: "/images/profile/user-2.jpg",
-    anonymous: true
-  }
-];
 
 const StyledImage = styled('img')(({ theme }) => ({
   width: '100%',
@@ -74,6 +53,25 @@ const FundDetail = ({ params }) => {
     state.fundReducer.funds.find(f => f.Id === fundId)
   );
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [donations, setDonations] = useState([]);
+  const [isLoadingDonations, setIsLoadingDonations] = useState(true);
+
+  useEffect(() => {
+    const loadDonations = async () => {
+      try {
+        const donationsData = await fetchUserDonationsForFund(fundId);
+        setDonations(donationsData);
+      } catch (error) {
+        console.error('Error loading donations:', error);
+      } finally {
+        setIsLoadingDonations(false);
+      }
+    };
+
+    if (fundId) {
+      loadDonations();
+    }
+  }, [fundId]);
 
   if (!fund) {
     return (
@@ -105,10 +103,10 @@ const FundDetail = ({ params }) => {
     }
   };
 
-  const totalDonors = sampleDonations.length;
-  const totalDonations = sampleDonations.reduce((sum, donation) => sum + donation.amount, 0);
+  const totalDonors = donations.length;
+  const totalDonations = donations.reduce((sum, donation) => sum + donation.amount, 0);
   const averageDonation = totalDonations / totalDonors || 0;
-  const progress = (totalDonations / fund.requestedAmount) * 100;
+  const progress = (fund.raisedAmount / fund.requestedAmount) * 100;
   
 
   return (
@@ -126,7 +124,7 @@ const FundDetail = ({ params }) => {
           <BlankCard>
             <Box position="relative">
               <StyledImage
-                src={fund.images[currentImageIndex]}
+                src={`https://api.afrikticket.com/storage/${fund.images[currentImageIndex]}`}
                 alt={fund.title}
               />
               {fund.images.length > 1 && (
@@ -226,7 +224,7 @@ const FundDetail = ({ params }) => {
                 />
                 <Box mt={1} display="flex" justifyContent="space-between">
                   <Typography variant="body2" color="text.secondary">
-                    {totalDonations.toLocaleString()} GF collecté
+                    {fund.raisedAmount.toLocaleString()} GF collecté
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Objectif: {fund.requestedAmount.toLocaleString()} GF
@@ -266,7 +264,14 @@ const FundDetail = ({ params }) => {
                     {fund.status === 'active' ? 'Se termine le' : 'Terminé le'}
                   </Typography>
                   <Typography variant="body1">
-                    {format(new Date(fund.deadline), 'MMMM d, yyyy')}
+                    {(() => {
+                      try {
+                        return format(fund.deadline, 'MMMM d, yyyy');
+                      } catch (error) {
+                        console.error('Error formatting date:', error);
+                        return format(new Date(), 'MMMM d, yyyy'); // Fallback to current date
+                      }
+                    })()}
                   </Typography>
                 </Box>
               </Box>
@@ -308,7 +313,7 @@ const FundDetail = ({ params }) => {
             <Grid item xs={12} md={3}>
               <Box textAlign="center">
                 <Typography variant="h4" color="primary.main">
-                  {totalDonations.toLocaleString()} GF
+                  {fund.raisedAmount.toLocaleString()} GF
                 </Typography>
                 <Typography variant="subtitle2" color="text.secondary">
                   Total collecté
@@ -362,7 +367,16 @@ const FundDetail = ({ params }) => {
             </Button>
           </Box>
 
-          <TableContainer>
+          {isLoadingDonations ? (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Typography>Chargement des donations...</Typography>
+            </Box>
+          ) : donations.length === 0 ? (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+              <Typography>Aucune donation trouvée</Typography>
+            </Box>
+          ) : (
+            <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
@@ -374,8 +388,8 @@ const FundDetail = ({ params }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sampleDonations.map((donation) => (
-                  <TableRow key={donation.id} hover>
+                {donations.map((donation) => (
+                  <TableRow key={donation.user_id} hover>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Avatar
@@ -389,15 +403,45 @@ const FundDetail = ({ params }) => {
                             {donation.anonymous ? 'Anonymous Donor' : donation.donorName}
                           </Typography>
                           {!donation.anonymous && (
-                            <Typography variant="caption" color="text.secondary">
-                              {donation.email}
-                            </Typography>
+                            <>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {donation.email}
+                              </Typography>
+                              {donation.donor_info && (
+                                <Tooltip
+                                  title={
+                                    <Box>
+                                      <Typography variant="body2" gutterBottom>
+                                        Total donations: {donation.donor_info.total_donations}
+                                      </Typography>
+                                      <Typography variant="body2" gutterBottom>
+                                        Total donated: {donation.donor_info.total_donated.toLocaleString()} GF
+                                      </Typography>
+                                      <Typography variant="body2" gutterBottom>
+                                        Average donation: {donation.donor_info.average_donation.toLocaleString()} GF
+                                      </Typography>
+                                      <Typography variant="body2" gutterBottom>
+                                        Member since: {format(new Date(donation.donor_info.registration_date), 'MMM d, yyyy')}
+                                      </Typography>
+                                      <Typography variant="body2">
+                                        Last activity: {format(new Date(donation.donor_info.last_activity), 'MMM d, yyyy')}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                  arrow
+                                >
+                                  <IconButton size="small">
+                                    <IconInfoCircle size={16} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </>
                           )}
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(donation.donationDate), 'MMM d, yyyy')}
+                      {format(new Date(donation.created_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       <Typography variant="subtitle2" color="primary.main">
@@ -419,8 +463,8 @@ const FundDetail = ({ params }) => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={donation.status}
-                        color={getStatusColor(donation.status)}
+                        label={donation.status === 'paid' ? 'Completed' : donation.status}
+                        color={getStatusColor(donation.status === 'paid' ? 'Completed' : donation.status)}
                         size="small"
                       />
                     </TableCell>
@@ -429,6 +473,7 @@ const FundDetail = ({ params }) => {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
         </CardContent>
       </Card>
     </Box>

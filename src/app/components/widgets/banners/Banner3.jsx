@@ -12,7 +12,7 @@ const Banner3 = () => {
         </Typography>
         <Box textAlign="center">
           <Badge badgeContent={1} color="error" overlap="circular">
-            <Avatar src={"/images/profile/user-1.jpg"} alt="userBg" sx={{ width: 140, height: 140 }} />
+            <Avatar src={"/images/profile/user-default.jpg"} alt="userBg" sx={{ width: 140, height: 140 }} />
           </Badge>
 
           <Typography variant="h5" mt={3}>

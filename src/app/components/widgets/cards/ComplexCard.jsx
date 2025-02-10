@@ -16,7 +16,7 @@ import BlankCard from '../../shared/BlankCard';
 
 const complexCard = [
   {
-    avatar: "/images/profile/user-1.jpg",
+    avatar: "/images/profile/user-default.jpg",
     coveravatar: "/images/blog/blog-img1.jpg",
     title: 'As yen tumbles, gadget-loving Japan goes for secondhand iPhones',
     category: 'Social',

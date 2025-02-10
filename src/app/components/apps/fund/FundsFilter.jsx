@@ -16,20 +16,20 @@ const BoxStyled = styled(Box)(() => ({
 }));
 
 const FundsFilter = () => {
-  const funds = useSelector((state) => state.fundsReducer?.pendingFunds || []);
+  const funds = useSelector((state) => state.fundReducer?.funds || []);
 
   const totalFunds = funds.length;
   const activeFunds = funds.filter(fund => fund.status === 'active').length;
   const completedFunds = funds.filter(fund => fund.status === 'completed').length;
   const totalCollected = funds.reduce((sum, fund) => {
     if (fund.status === 'completed' || fund.status === 'active') {
-      return sum + (fund.currentAmount || 0);
+      return sum + (fund.raisedAmount || 0);
     }
     return sum;
   }, 0);
 
   return (
-    <Grid container spacing={3} textAlign="center">
+    <Grid container spacing={3} textAlign="center" sx={{ marginBottom: 4 }}>
       <Grid item xs={12} md={3}>
         <BoxStyled sx={{ backgroundColor: 'primary.light', color: 'primary.main' }}>
           <Typography variant="h3">{totalFunds}</Typography>

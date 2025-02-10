@@ -38,7 +38,7 @@ const ContactAdd = () => {
         id,
         values.firstname,
         values.lastname,
-        '/images/profile/user-1.jpg',
+        '/images/profile/user-default.jpg',
         values.department,
         values.company,
         values.phone,

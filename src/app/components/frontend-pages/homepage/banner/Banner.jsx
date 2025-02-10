@@ -81,7 +81,7 @@ const Banner = () => {
                             justifyContent="center"
                         >
                             <AvatarGroup>
-                                <Avatar alt="Remy Sharp" src='/images/profile/user-1.jpg' sx={{ width: 40, height: 40 }} />
+                                <Avatar alt="Remy Sharp" src='/images/profile/user-default.jpg' sx={{ width: 40, height: 40 }} />
                                 <Avatar alt="Travis Howard" src='/images/profile/user-2.jpg' sx={{ width: 40, height: 40 }} />
                                 <Avatar alt="Cindy Baker" src='/images/profile/user-3.jpg' sx={{ width: 40, height: 40 }} />
                             </AvatarGroup>

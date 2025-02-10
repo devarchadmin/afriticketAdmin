@@ -35,7 +35,7 @@ function SamplePrevArrow(props) {
 const Reviews = [
     {
         id: 1,
-        img: '/images/profile/user-1.jpg',
+        img: '/images/profile/user-default.jpg',
         name: 'Jenny Wilson',
         text: 'This template is great, UI-rich and up-to-date. Although it is pretty much complete, I suggest to improve a bit of documentation. Thanks & Highly recommended!'
     },

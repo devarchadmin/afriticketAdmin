@@ -25,9 +25,9 @@ const initialState = {
   }
 };
 
-const mapFundData = (fund) => {
-  // Add debug logging
-  console.log('Raw fund data:', JSON.stringify(fund, null, 2));
+const mapFundData = (data) => {
+  const fund = data.fundraising;
+  const stats = data.stats;
   
   return {
     id: fund?.id || '',
@@ -36,9 +36,19 @@ const mapFundData = (fund) => {
     goal: parseFloat(fund?.goal) || 0,
     currentAmount: parseFloat(fund?.current) || 0,
     status: fund?.status || 'pending',
+    category: fund?.category || '',
     created_at: fund?.created_at || '',
     updated_at: fund?.updated_at || '',
-    organization: fund?.organization || null
+    organization: fund?.organization || null,
+    images: fund?.images || [],
+    donations: fund?.donations || [],
+    stats: {
+      totalDonors: stats?.total_donors || 0,
+      totalRaised: stats?.total_raised || 0,
+      progressPercentage: stats?.progress_percentage || 0,
+      remainingAmount: stats?.remaining_amount || 0,
+      averageDonation: stats?.average_donation || 0
+    }
   };
 };
 
@@ -128,6 +138,37 @@ export const handleApproveFund = (fundId) => async (dispatch) => {
 
 export const handleRejectFund = (fundId, reason) => async (dispatch) => {
   return handleFundReview(dispatch, fundId, 'rejected', reason);
+};
+
+// New action to fetch all fundraising campaigns
+export const fetchAllFundraisings = () => async (dispatch) => {
+  try {
+    console.log('Fetching all fundraisings...');
+    const response = await axiosServices.get(FUNDS_URL);
+    console.log('API Response:', response.data);
+    
+    if (response?.data?.status === 'success' && response.data.data?.fundraisings) {
+      console.log('Processing fundraisings data...');
+      const funds = response.data.data.fundraisings.map(fundData => {
+        const mapped = mapFundData(fundData);
+        console.log('Mapped fundraising:', mapped);
+        return mapped;
+      });
+      console.log('Total fundraisings processed:', funds.length);
+      dispatch(setAllFunds(funds));
+    } else {
+      console.warn('No valid fundraisings data in response');
+      dispatch(setAllFunds([]));
+    }
+  } catch (error) {
+    console.error('Failed to fetch fundraisings:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    dispatch(setAllFunds([]));
+  }
 };
 
 export const fetchPendingFunds = (page = 1) => async (dispatch) => {

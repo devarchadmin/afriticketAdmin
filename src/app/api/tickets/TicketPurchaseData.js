@@ -8,7 +8,7 @@ const TicketPurchaseData = [
     eventId: 1,
     buyerName: "John Doe",
     email: "john.doe@example.com",
-    avatar: "/images/profile/user-1.jpg",
+    avatar: "/images/profile/user-default.jpg",
     purchaseDate: sub(new Date(), { days: 5 }),
     ticketCount: 2,
     ticketType: "VIP",

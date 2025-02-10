@@ -7,7 +7,7 @@ const followerCard = [
   {
     title: 'Andrew Grant',
     location: 'El Salvador',
-    avatar: "/images/profile/user-1.jpg",
+    avatar: "/images/profile/user-default.jpg",
   },
   {
     title: 'Leo Pratt',
@@ -41,7 +41,7 @@ const FriendCard = () => {
                   </Typography>
                   <Stack direction="row" spacing={2} alignItems="center">
                     <AvatarGroup>
-                      <Avatar sx={{ height: 28, width: 28 }} alt="Remy Sharp" src={"/images/profile/user-1.jpg"} />
+                      <Avatar sx={{ height: 28, width: 28 }} alt="Remy Sharp" src={"/images/profile/user-default.jpg"} />
                       <Avatar sx={{ height: 28, width: 28 }} alt="Travis Howard" src={"/images/profile/user-2.jpg"} />
                       <Avatar sx={{ height: 28, width: 28 }} alt="Cindy Baker" src={"/images/profile/user-3.jpg"} />
                     </AvatarGroup>

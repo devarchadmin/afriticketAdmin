@@ -68,18 +68,6 @@ const Menuitems = [
     icon: IconCalendar,
     href: '/events-calendar',
   },
-  {
-    id: uniqueId(),
-    title: 'Se connecter',
-    icon: IconLogin,
-    href: '/auth/login',
-  },
-  {
-    id: uniqueId(),
-    title: 'Mot de passe oublié',
-    icon: IconReload,
-    href: 'auth/forgot-password',
-  },
 ];
 
 export default Menuitems;

@@ -82,7 +82,7 @@ const rows = [
     {
         orderno: 'ORD - 0120145',
         items: '5',
-        imgsrc: '/images/profile/user-1.jpg',
+        imgsrc: '/images/profile/user-default.jpg',
         customer: 'Sunil Joshi',
         total: '550,000',
         status: 'Completed',

@@ -1,11 +1,11 @@
 export const basicsTableData = [
   {
     status: 'active',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     name: 'Olivia Rhye',
     project: 'Xtreme admin',
     percent: 60,
-    users: [{ img: '/images/profile/user-1.jpg' }, { img: '/images/profile/user-2.jpg' }],
+    users: [{ img: '/images/profile/user-default.jpg' }, { img: '/images/profile/user-2.jpg' }],
   },
   {
     status: 'cancel',
@@ -14,7 +14,7 @@ export const basicsTableData = [
     project: 'Adminpro admin',
     percent: 30,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-3.jpg' },
     ],
@@ -29,11 +29,11 @@ export const basicsTableData = [
   },
   {
     status: 'active',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     name: 'Olivia Rhye',
     project: 'Xtreme admin',
     percent: 60,
-    users: [{ img: '/images/profile/user-1.jpg' }, { img: '/images/profile/user-2.jpg' }],
+    users: [{ img: '/images/profile/user-default.jpg' }, { img: '/images/profile/user-2.jpg' }],
   },
   {
     status: 'cancel',
@@ -42,7 +42,7 @@ export const basicsTableData = [
     project: 'Adminpro admin',
     percent: 30,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-3.jpg' },
     ],
@@ -62,7 +62,7 @@ export const basicsTableData = [
     project: 'Materialpro admin',
     percent: 37,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-5.jpg' },
     ],
@@ -82,7 +82,7 @@ export const basicsTableData = [
     project: 'Materialpro admin',
     percent: 37,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-5.jpg' },
     ],
@@ -105,11 +105,11 @@ export const basicsTableData = [
   },
   {
     status: 'active',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     name: 'Olivia Rhye',
     project: 'Xtreme admin',
     percent: 60,
-    users: [{ img: '/images/profile/user-1.jpg' }, { img: '/images/profile/user-2.jpg' }],
+    users: [{ img: '/images/profile/user-default.jpg' }, { img: '/images/profile/user-2.jpg' }],
   },
   {
     status: 'cancel',
@@ -118,7 +118,7 @@ export const basicsTableData = [
     project: 'Adminpro admin',
     percent: 30,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-3.jpg' },
     ],
@@ -138,7 +138,7 @@ export const basicsTableData = [
     project: 'Materialpro admin',
     percent: 37,
     users: [
-      { img: '/images/profile/user-1.jpg' },
+      { img: '/images/profile/user-default.jpg' },
       { img: '/images/profile/user-2.jpg' },
       { img: '/images/profile/user-5.jpg' },
     ],

@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -24,13 +24,17 @@ import {
   IconArrowLeft,
   IconWorldWww,
   IconMail,
-  IconPhone
+  IconPhone,
+  IconFileAnalytics
 } from '@tabler/icons-react';
 import {
   setSelectedOrganization,
 } from '@/store/apps/organization/OrganizationSlice';
 import { getOrganization } from '@/app/api/organizations/OrganizationData';
 import CircularProgress from '@mui/material/CircularProgress';
+import axiosServices from '@/utils/axios';
+import EventsTab from './EventsTab';
+import FundraisingTab from '../events/FundraisingTab';
 
 // Payment History Tab Component
 const PaymentHistoryTab = ({ organizationId }) => {
@@ -168,11 +172,51 @@ const OrganizationDetail = ({ params }) => {
   const [organization, setOrganization] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [documents, setDocuments] = useState(null);
 
-  // Fetch events from Redux store
-  const events = useSelector((state) =>
-    state.eventReducer.events.filter(event => event.organizationId === organizationId)
-  );
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
+  // Get fundraising data from Redux store
+  const fundraisings = useSelector((state) => {
+    const allFunds = state.fundsReducer.allFunds || [];
+    const parsedOrgId = parseInt(organizationId);
+    return allFunds.filter(fund => fund.organization?.id === parsedOrgId);
+  });
+
+  // Calculate financial metrics
+  const financialMetrics = useMemo(() => {
+    return fundraisings.reduce((metrics, fund) => {
+      metrics.totalRaised += fund.raisedAmount || 0;
+      metrics.expectedAmount += fund.requestedAmount || 0;
+      return metrics;
+    }, {
+      totalRaised: 0,
+      expectedAmount: 0
+    });
+  }, [fundraisings]);
+
+  // Fetch events for organization
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoadingEvents(true);
+        const response = await axiosServices.get('https://api.afrikticket.com/api/events');
+        const organizationEvents = response.data.data.filter(
+          event => event.organization.id === organizationId
+        );
+        setEvents(organizationEvents);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    if (organizationId) {
+      fetchEvents();
+    }
+  }, [organizationId]);
 
   // Sample fundraisers (you might want to replace this with actual data from your backend)
   const fundraisers = [
@@ -198,6 +242,7 @@ const OrganizationDetail = ({ params }) => {
     }
   ];
 
+  // Fetch organization data
   useEffect(() => {
     const fetchOrganizationData = async () => {
       try {
@@ -217,6 +262,25 @@ const OrganizationDetail = ({ params }) => {
       fetchOrganizationData();
     }
   }, [dispatch, organizationId]);
+
+  // Fetch documents if organization is pending
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        if (organization?.status === 'pending') {
+          const response = await axiosServices.get('https://api.afrikticket.com/api/admin/pending/orgs');
+          const orgDocs = response.data.data.data.find(org => org.id === organizationId);
+          setDocuments(orgDocs);
+        }
+      } catch (err) {
+        console.error('Error fetching documents:', err);
+      }
+    };
+
+    if (organization) {
+      fetchDocuments();
+    }
+  }, [organization, organizationId]);
 
   if (loading) {
     return (
@@ -274,80 +338,134 @@ const OrganizationDetail = ({ params }) => {
     }
   };
 
-  // For now, using sample values since we don't have the metrics data
-  const totalRaised = 0;
-  const expectedAmount = 0;
-
   const renderEvents = () => (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Titre de l'événement</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell>Lieu</TableCell>
-            <TableCell>Billets vendus</TableCell>
-            <TableCell>Statut</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {events.map((event) => (
-            <TableRow key={event.Id} hover>
-              <TableCell>{event.ticketTitle}</TableCell>
-              <TableCell>{format(new Date(event.Date), 'dd MMM yyyy')}</TableCell>
-              <TableCell>{event.location}</TableCell>
-              <TableCell>{event.numberOfTickets}</TableCell>
-              <TableCell>
-                <Chip
-                  label={event.status}
-                  color={event.status === 'active' ? 'success' : 'default'}
-                  size="small"
-                />
-              </TableCell>
+    loadingEvents ? (
+      <Box p={3} textAlign="center">
+        <CircularProgress />
+      </Box>
+    ) : events.length === 0 ? (
+      <Box p={3} textAlign="center">
+        <Typography>Aucun événement trouvé pour cette organisation</Typography>
+      </Box>
+    ) : (
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Titre</TableCell>
+              <TableCell>Catégorie</TableCell>
+              <TableCell>Date & Heure</TableCell>
+              <TableCell>Lieu</TableCell>
+              <TableCell>Prix</TableCell>
+              <TableCell>Places restantes</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {events.map((event) => (
+              <TableRow key={event.id} hover>
+                {/* ... existing table row content ... */}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )
   );
 
-  const renderFundraisers = () => (
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Titre de la collecte de fonds</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Montant cible</TableCell>
-            <TableCell>Montant collecté</TableCell>
-            <TableCell>Statut</TableCell>
-            <TableCell>Période</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {fundraisers.map((fundraiser) => (
-            <TableRow key={fundraiser.id} hover>
-              <TableCell>{fundraiser.title}</TableCell>
-              <TableCell>{fundraiser.description}</TableCell>
-              <TableCell>{fundraiser.targetAmount.toLocaleString()} GF</TableCell>
-              <TableCell>{fundraiser.raisedAmount.toLocaleString()} GF</TableCell>
-              <TableCell>
-                <Chip
-                  label={fundraiser.status}
-                  color={fundraiser.status === 'Actif' ? 'success' : 'warning'}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                {format(fundraiser.startDate, 'dd MMM yyyy')} -
-                {format(fundraiser.endDate, 'dd MMM yyyy')}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+  const renderDocuments = () => (
+    organization?.status === 'pending' ? (
+      documents ? (
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Document</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow hover>
+                <TableCell>ICD Document</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={`https://api.afrikticket.com/storage/${documents.icd_document}`}
+                    target="_blank"
+                    startIcon={<IconFileAnalytics size={16} />}
+                  >
+                    Voir l'ICD
+                  </Button>
+                </TableCell>
+              </TableRow>
+              <TableRow hover>
+                <TableCell>Registre de Commerce</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={`https://api.afrikticket.com/storage/${documents.commerce_register}`}
+                    target="_blank"
+                    startIcon={<IconFileAnalytics size={16} />}
+                  >
+                    Voir le registre
+                  </Button>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Box p={3} textAlign="center">
+          <Typography>Chargement des documents...</Typography>
+        </Box>
+      )
+    ) : (
+      <Box p={3} textAlign="center">
+        <Typography>Aucun document à afficher pour les organisations non en attente</Typography>
+      </Box>
+    )
   );
+
+    
+  const renderFundraisers = () => (
+  <TableContainer>
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>Titre de la collecte de fonds</TableCell>
+          <TableCell>Description</TableCell>
+          <TableCell>Montant cible</TableCell>
+          <TableCell>Montant collecté</TableCell>
+          <TableCell>Statut</TableCell>
+          <TableCell>Période</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {fundraisers.map((fundraiser) => (
+          <TableRow key={fundraiser.id} hover>
+            <TableCell>{fundraiser.title}</TableCell>
+            <TableCell>{fundraiser.description}</TableCell>
+            <TableCell>{fundraiser.targetAmount.toLocaleString()} GF</TableCell>
+            <TableCell>{fundraiser.raisedAmount.toLocaleString()} GF</TableCell>
+            <TableCell>
+              <Chip
+                label={fundraiser.status}
+                color={fundraiser.status === 'Actif' ? 'success' : 'warning'}
+                size="small"
+              />
+            </TableCell>
+            <TableCell>
+              {format(fundraiser.startDate, 'dd MMM yyyy')} -
+              {format(fundraiser.endDate, 'dd MMM yyyy')}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
+
 
   return (
     <Box p={3}>
@@ -382,11 +500,10 @@ const OrganizationDetail = ({ params }) => {
                 <Box flex={1}>
                   <Box display="flex" alignItems="center" gap={2} mb={1}>
                     <Typography variant="h4">{organization.name}</Typography>
-
                   </Box>
                   <Typography variant="subtitle1" color="text.secondary">
                     {organization.description}
-                  </Typography>
+                  </Typography> {/* Add closing tag here */}
                 </Box>
               </Box>
             </CardContent>
@@ -401,7 +518,7 @@ const OrganizationDetail = ({ params }) => {
               <Grid container spacing={3} textAlign="center">
                 <Grid item xs={12} md={4}>
                   <Typography variant="h4" color="primary.main">
-                    {totalRaised.toLocaleString()} GF
+                    {financialMetrics.totalRaised.toLocaleString()} GF
                   </Typography>
                   <Typography variant="subtitle1" color="text.secondary">
                     Total collecté
@@ -409,7 +526,7 @@ const OrganizationDetail = ({ params }) => {
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Typography variant="h4" color="primary.main">
-                    {expectedAmount.toLocaleString()} GF
+                    {financialMetrics.expectedAmount.toLocaleString()} GF
                   </Typography>
                   <Typography variant="subtitle1" color="text.secondary">
                     Montant attendu
@@ -443,15 +560,16 @@ const OrganizationDetail = ({ params }) => {
                   variant="scrollable"
                   scrollButtons="auto"
                 >
+                  <Tab label="Documents"/>
                   <Tab label="Événements" />
                   <Tab label="Collectes de fonds" />
                   <Tab label="Historique des Paiements" />
                 </Tabs>
               </Box>
-
-              {activeTab === 0 && renderEvents()}
-              {activeTab === 1 && renderFundraisers()}
-              {activeTab === 2 && <PaymentHistoryTab organizationId={organizationId} />}
+              {activeTab === 0 && renderDocuments()}
+              {activeTab === 1 && <EventsTab organizationId={organizationId} />}
+              {activeTab === 2 && <FundraisingTab organizationId={organizationId} />}
+              {activeTab === 3 && <PaymentHistoryTab organizationId={organizationId} />}
             </CardContent>
           </Card>
         </Grid>

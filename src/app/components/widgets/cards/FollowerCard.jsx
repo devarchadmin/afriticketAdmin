@@ -8,7 +8,7 @@ const followerCard = [
   {
     title: 'Andrew Grant',
     location: 'El Salvador',
-    avatar: "/images/profile/user-1.jpg",
+    avatar: "/images/profile/user-default.jpg",
   },
   {
     title: 'Leo Pratt',

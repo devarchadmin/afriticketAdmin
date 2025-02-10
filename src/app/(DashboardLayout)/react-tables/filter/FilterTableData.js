@@ -2,7 +2,7 @@ export const basicsTableData = [
   {
     id: '1',
     invoiceno: '3066',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     post: 'Web Designer',
     pname: 'Elite Admin',
@@ -52,7 +52,7 @@ export const basicsTableData = [
   {
     id: '6',
     invoiceno: '3071',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     post: 'Web Designer',
     pname: 'Elite Admin',
@@ -92,7 +92,7 @@ export const basicsTableData = [
   {
     id: '10',
     invoiceno: '3075',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     post: 'Web Designer',
     pname: 'Elite Admin',

@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 const photos = [
   {
-    img: "/images/profile/user-1.jpg",
+    img: "/images/profile/user-default.jpg",
     id: 1,
   },
   {

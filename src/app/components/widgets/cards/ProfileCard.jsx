@@ -34,7 +34,7 @@ const profileCard = [
   {
     name: 'Andrew Grant',
     role: 'Technology Director',
-    avatar: "/images/profile/user-1.jpg",
+    avatar: "/images/profile/user-default.jpg",
   },
   {
     name: 'Leo Pratt',

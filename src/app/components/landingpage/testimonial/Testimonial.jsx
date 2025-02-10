@@ -20,7 +20,7 @@ const SliderData = [
   {
     title: 'Jenny Wilson',
     subtitle: 'Features avaibility',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     subtext:
       'The dashboard template from adminmart has helped me provide a clean and sleek look to my dashboard and made it look exactly the way I wanted it to, mainly without having.',
   },

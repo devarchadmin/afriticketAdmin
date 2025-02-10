@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,8 @@ import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
 import { IconArrowLeft, IconChevronLeft, IconChevronRight, IconDownload } from '@tabler/icons-react';
 import { useTheme, useMediaQuery } from '@mui/material';
+import axiosServices from '@/utils/axios';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const sampleTicketPurchases = [
   {
@@ -31,7 +33,7 @@ const sampleTicketPurchases = [
     ticketCount: 2,
     totalAmount: 300,
     paymentStatus: "Paid",
-    avatar: "/images/profile/user-1.jpg"
+    avatar: "/images/profile/user-default.jpg"
   },
   {
     id: 2,
@@ -55,25 +57,86 @@ const EventDetail = ({ params }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  const [loading, setLoading] = useState(true);
+  const [eventDetails, setEventDetails] = useState(null);
+  const [error, setError] = useState(null);
 
-  if (!event) {
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosServices.get(`/admin/events/${eventId}/users`);
+        setEventDetails(response.data.data);
+      } catch (err) {
+        console.error('Error fetching event details:', err);
+        setError('Failed to load event details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (eventId) {
+      fetchEventDetails();
+    }
+  }, [eventId]);
+
+  if (loading) {
+    return (
+      <Box p={3} display="flex" justifyContent="center">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error || !eventDetails) {
     return (
       <Box p={3}>
-        <Typography>Événement introuvable</Typography>
+        <Typography>{error || 'Événement introuvable'}</Typography>
         <Button onClick={() => router.back()}>Go Back</Button>
       </Box>
     );
   }
 
+  const { event: eventData, stats, ticket_buyers } = eventDetails;
+  
+  // Create a merged event object with mock data for missing fields
+  const enrichedEvent = {
+    Id: eventData.id,
+    ticketTitle: eventData.title,
+    ticketDescription: eventData.description,
+    location: eventData.location,
+    Date: new Date(eventData.date),
+    duration: eventData.duration || '2', // Mock duration if missing
+    numberOfTickets: eventData.max_tickets || 100, // Mock max tickets if missing
+    ticketPrice: parseFloat(eventData.price),
+    status: eventData.status || 'active',
+    images: eventData.main_image ? 
+      [`https://api.afrikticket.com/storage/${eventData.main_image}`] : 
+      ['/images/events/default-event.jpg'],
+    organization: {
+      name: eventData.organization?.name || 'Organization Name',
+      logo: eventData.organization?.logo ? 
+        `https://api.afrikticket.com/storage/${eventData.organization.logo}` : 
+        '/images/organizations/default.jpg',
+      email: eventData.organization?.email || '',
+      phone: eventData.organization?.phone || ''
+    }
+  };
+  
+  const totalTicketsSold = stats.total_tickets_sold;
+  const totalRevenue = stats.total_revenue;
+  const ticketsRemaining = enrichedEvent.numberOfTickets - totalTicketsSold;
+
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? event.images.length - 1 : prev - 1
+      prev === 0 ? enrichedEvent.images.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === event.images.length - 1 ? 0 : prev + 1
+      prev === enrichedEvent.images.length - 1 ? 0 : prev + 1
     );
   };
 
@@ -88,15 +151,11 @@ const EventDetail = ({ params }) => {
 
   const getEventStatusChip = () => (
     <Chip
-      label={event.status === 'active' ? 'Active' : 'Completed'}
-      color={event.status === 'active' ? 'success' : 'error'}
+      label={enrichedEvent.status === 'active' ? 'Active' : 'Completed'}
+      color={enrichedEvent.status === 'active' ? 'success' : 'error'}
       size="small"
     />
   );
-
-  const totalTicketsSold = sampleTicketPurchases.reduce((sum, purchase) => sum + purchase.ticketCount, 0);
-  const totalRevenue = sampleTicketPurchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0);
-  const ticketsRemaining = parseInt(event.numberOfTickets) - totalTicketsSold;
 
   return (
     <Box p={3} sx={{ p: 0 }}>
@@ -121,18 +180,18 @@ const EventDetail = ({ params }) => {
             overflow: 'hidden'
           }}
         >
-          {event.images && event.images.length > 0 && (
+          {enrichedEvent.images && enrichedEvent.images.length > 0 && (
             <>
               <img
-                src={event.images[currentImageIndex]}
-                alt={event.ticketTitle}
+                src={enrichedEvent.images[currentImageIndex]}
+                alt={enrichedEvent.ticketTitle}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover'
                 }}
               />
-              {event.images.length > 1 && (
+              {enrichedEvent.images.length > 1 && (
                 <>
                   <IconButton
                     sx={{
@@ -170,16 +229,16 @@ const EventDetail = ({ params }) => {
             <Grid item xs={12}>
               <Box display="flex" alignItems="center" gap={2}>
                 <Avatar
-                  src={event.organization?.logo}
+                  src={enrichedEvent.organization.logo}
                   sx={{ width: 50, height: 50 }}
                 />
                 <Box>
                   <Typography variant="subtitle1" color="text.secondary">
-                    {event.organization?.name}
+                    {enrichedEvent.organization.name}
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Typography variant="h3">
-                      {event.ticketTitle}
+                      {enrichedEvent.ticketTitle}
                     </Typography>
                     {getEventStatusChip()}
                   </Box>
@@ -190,7 +249,7 @@ const EventDetail = ({ params }) => {
             {/* Event Description */}
             <Grid item xs={12}>
               <Typography variant="body1" paragraph>
-                {event.ticketDescription}
+                {enrichedEvent.ticketDescription}
               </Typography>
             </Grid>
 
@@ -201,7 +260,7 @@ const EventDetail = ({ params }) => {
                   Date et heure
                 </Typography>
                 <Typography variant="body1">
-                  {format(new Date(event.Date), 'EEEE, MMMM d, yyyy h:mm a')}
+                  {format(new Date(enrichedEvent.Date), 'EEEE, MMMM d, yyyy h:mm a')}
                 </Typography>
               </Box>
 
@@ -210,7 +269,7 @@ const EventDetail = ({ params }) => {
                   Emplacement
                 </Typography>
                 <Typography variant="body1">
-                  {event.location}
+                  {enrichedEvent.location}
                 </Typography>
               </Box>
 
@@ -219,7 +278,7 @@ const EventDetail = ({ params }) => {
                   Duration
                 </Typography>
                 <Typography variant="body1">
-                  {event.duration} heures
+                  {enrichedEvent.duration} heures
                 </Typography>
               </Box>
             </Grid>
@@ -231,7 +290,7 @@ const EventDetail = ({ params }) => {
                   Prix ​​du billet
                 </Typography>
                 <Typography variant="h4" color="primary.main">
-                  {parseFloat(event.ticketPrice).toFixed(2)} GF
+                  {parseFloat(enrichedEvent.ticketPrice).toFixed(2)} GF
                 </Typography>
               </Box>
 
@@ -250,11 +309,11 @@ const EventDetail = ({ params }) => {
                 </Typography>
                 <Box display="flex" alignItems="center" gap={1}>
                   <Avatar
-                    src={event.organization?.logo}
+                    src={enrichedEvent.organization.logo}
                     sx={{ width: 24, height: 24 }}
                   />
                   <Typography variant="body1">
-                    {event.organization?.name}
+                    {enrichedEvent.organization.name}
                   </Typography>
                 </Box>
               </Box>
@@ -313,7 +372,7 @@ const EventDetail = ({ params }) => {
             gap={isMobile ? 2 : 0}
           >
             <Typography variant="h5" component="div" sx={{ mb: isMobile ? 2 : 0 }}>
-              Achats de billets
+              Achats de billets ({stats.unique_buyers} acheteurs)
             </Typography>
             <Box
               display="flex"
@@ -321,12 +380,10 @@ const EventDetail = ({ params }) => {
               alignItems="center"
               gap={2}
             >
-              
-
               <Button
                 variant="outlined"
                 startIcon={<IconDownload />}
-                onClick={() => {/* Add export functionality */ }}
+                onClick={() => {/* Add export functionality */}}
                 sx={{ alignSelf: isMobile ? 'start' : 'center' }}
               >
                 Exporter des données
@@ -339,7 +396,6 @@ const EventDetail = ({ params }) => {
               <TableHead>
                 <TableRow>
                   <TableCell><Typography fontWeight={600}>Acheteur</Typography></TableCell>
-                  <TableCell><Typography fontWeight={600}>Date d'achat</Typography></TableCell>
                   <TableCell><Typography fontWeight={600}>Contact</Typography></TableCell>
                   <TableCell><Typography fontWeight={600}>Billets</Typography></TableCell>
                   <TableCell><Typography fontWeight={600}>Montant total</Typography></TableCell>
@@ -347,31 +403,33 @@ const EventDetail = ({ params }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sampleTicketPurchases.map((purchase) => (
-                  <TableRow key={purchase.id} hover>
+                {ticket_buyers.map((buyer) => (
+                  <TableRow key={buyer.user.id} hover>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar src={purchase.avatar} sx={{ mr: 2 }} />
+                        <Avatar 
+                          src={buyer.user.profile_image ? `https://api.afrikticket.com/storage/${buyer.user.profile_image}` : null}
+                          sx={{ mr: 2 }}
+                        >
+                          {buyer.user.name.charAt(0)}
+                        </Avatar>
                         <Typography variant="subtitle2">
-                          {purchase.buyerName}
+                          {buyer.user.name}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {format(new Date(purchase.purchaseDate), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{purchase.email}</Typography>
+                      <Typography variant="body2">{buyer.user.email}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {purchase.phone}
+                        {buyer.user.phone}
                       </Typography>
                     </TableCell>
-                    <TableCell>{purchase.ticketCount}</TableCell>
-                    <TableCell>{purchase.totalAmount} GF</TableCell>
+                    <TableCell>{buyer.tickets_purchased}</TableCell>
+                    <TableCell>{buyer.total_spent} GF</TableCell>
                     <TableCell>
                       <Chip
-                        label={purchase.paymentStatus}
-                        color={getStatusColor(purchase.paymentStatus)}
+                        label={buyer.user.status}
+                        color={getStatusColor(buyer.user.status)}
                         size="small"
                       />
                     </TableCell>

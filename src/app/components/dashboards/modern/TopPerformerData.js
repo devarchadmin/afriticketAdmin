@@ -1,7 +1,7 @@
 const TopPerformerData = [
   {
     id: '1',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     post: 'Web Designer',
     pname: 'Elite Admin',

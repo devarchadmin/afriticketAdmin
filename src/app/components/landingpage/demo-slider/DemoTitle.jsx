@@ -21,7 +21,7 @@ const DemoTitle = () => {
               mb={2}
             >
               <AvatarGroup>
-                <Avatar alt="Remy Sharp" src='/images/profile/user-1.jpg' sx={{ width: 28, height: 28 }} />
+                <Avatar alt="Remy Sharp" src='/images/profile/user-default.jpg' sx={{ width: 28, height: 28 }} />
                 <Avatar alt="Travis Howard" src='/images/profile/user-2.jpg' sx={{ width: 28, height: 28 }} />
                 <Avatar alt="Cindy Baker" src='/images/profile/user-3.jpg' sx={{ width: 28, height: 28 }} />
               </AvatarGroup>

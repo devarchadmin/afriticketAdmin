@@ -120,7 +120,7 @@ const AdminProfileBanner = () => {
             <Box>
               <ProfileImage>
                 <Avatar
-                  src={"/images/profile/user-1.jpg"}
+                  src={"/images/profile/user-default.jpg"}
                   alt="Admin Profile"
                   sx={{
                     borderRadius: '50%',

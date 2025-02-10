@@ -18,7 +18,7 @@ import {
 const performers = [
     {
         id: '1',
-        imgsrc: '/images/profile/user-1.jpg',
+        imgsrc: '/images/profile/user-default.jpg',
         name: 'Sunil Joshi',
         rating: 4,
         reviews: 'I like this design',

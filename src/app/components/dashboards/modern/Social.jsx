@@ -11,7 +11,7 @@ const Social = () => {
       <>
         <Stack direction="row" spacing={2}>
           <Avatar
-            src={"/images/profile/user-1.jpg"}
+            src={"/images/profile/user-default.jpg"}
             alt={'ProfileImg'}
             sx={{ borderRadius: '8px', width: 70, height: 70 }}
           />
@@ -24,7 +24,7 @@ const Social = () => {
         </Stack>
         <Stack direction="row" justifyContent="space-between" mt={5}>
           <AvatarGroup max={4}>
-            <Avatar alt="Remy Sharp" src={"/images/profile/user-1.jpg"} />
+            <Avatar alt="Remy Sharp" src={"/images/profile/user-default.jpg"} />
             <Avatar alt="Travis Howard" src={"/images/profile/user-2.jpg"} />
             <Avatar alt="Cindy Baker" src={"/images/profile/user-3.jpg"} />
             <Avatar alt="Agnes Walker" src={"/images/profile/user-4.jpg"} />

@@ -21,7 +21,7 @@ const WelcomeCard = () => {
                   alignItems: 'center',
                 }}
               >
-                <Avatar src='/images/profile/user-1.jpg' alt="img" sx={{ width: 40, height: 40 }} />
+                <Avatar src='/images/profile/user-default.jpg' alt="img" sx={{ width: 40, height: 40 }} />
                 <Typography variant="h5" whiteSpace="nowrap">
                   Welcome back Mathew Anderson!
                 </Typography>

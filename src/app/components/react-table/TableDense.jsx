@@ -31,7 +31,7 @@ import {
 const rows = [
     {
         status: 'active',
-        avatar: "/images/profile/user-1.jpg",
+        avatar: "/images/profile/user-default.jpg",
         tag: 'rhye',
         cname: 'Olivia Rhye',
         email: 'olivia@ui.com',

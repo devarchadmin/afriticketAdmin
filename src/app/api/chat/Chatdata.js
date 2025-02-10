@@ -26,7 +26,7 @@ const ChatData = {
       id: '1',
       clientId: '1',
       clientName: 'John Doe',
-      clientAvatar: '/images/profile/user-1.jpg',
+      clientAvatar: '/images/profile/user-default.jpg',
       organizerId: '1',
       organizerName: 'Event Organizer',
       organizerAvatar: '/images/profile/user-2.jpg',

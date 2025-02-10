@@ -32,7 +32,7 @@ const rows = [
   {
     no: 3066,
     status: 'paid',
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     cname: 'Olivia Rhye',
     email: 'olivia@ui.com',
     percent: 60,

@@ -2,7 +2,7 @@
 
 const notifications = [
   {
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     title: 'Roman Joined the Team!',
     subtitle: 'Congratulate him',
   },
@@ -22,7 +22,7 @@ const notifications = [
     subtitle: 'Assign her new tasks',
   },
   {
-    avatar: '/images/profile/user-1.jpg',
+    avatar: '/images/profile/user-default.jpg',
     title: 'Roman Joined the Team!',
     subtitle: 'Congratulate him',
   },

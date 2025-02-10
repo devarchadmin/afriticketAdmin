@@ -14,7 +14,7 @@ const StillQuestions = () => {
         <Box bgcolor="primary.light" p={5} mt={7}>
           <Stack>
             <AvatarGroup sx={{ flexDirection: 'row', justifyContent: 'center' }}>
-              <Avatar alt="Remy Sharp" src={"/images/profile/user-1.jpg"} />
+              <Avatar alt="Remy Sharp" src={"/images/profile/user-default.jpg"} />
               <Avatar alt="Travis Howard" src={"/images/profile/user-2.jpg"} />
               <Avatar alt="Cindy Baker" src={"/images/profile/user-3.jpg"} />
             </AvatarGroup>

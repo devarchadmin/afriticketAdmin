@@ -32,6 +32,7 @@ const mapEventData = (event) => ({
   status: event?.status || 'active',
   createdAt: event?.created_at || '',
   updatedAt: event?.updated_at || '',
+  category: event?.category || 'other',
 });
 
 export const EventSlice = createSlice({

@@ -28,6 +28,7 @@ import { IconCheck, IconX } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import RejectDialog from './RejectDialog';
 import FundAdd from './FundAdd';
+import { getOrganizations } from '@/app/api/organizations/OrganizationData';
 
 const PendingFundListing = () => {
   const dispatch = useDispatch();
@@ -37,6 +38,7 @@ const PendingFundListing = () => {
   const [selectedOrganization, setSelectedOrganization] = useState('all');
   const [fundDialogOpen, setFundDialogOpen] = useState(false);
   const [selectedFund, setSelectedFund] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
 
   // Get pagination info from Redux
   const { currentPage, totalPages, totalItems } = useSelector(
@@ -47,6 +49,24 @@ const PendingFundListing = () => {
     dispatch(fetchPendingFunds());
   }, [dispatch, currentPage]); // Refetch when page changes
 
+  // Fetch organizations when the component mounts
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      try {
+        const response = await getOrganizations();
+        const orgsData = response.data.map(item => ({
+          id: item.organization.id,
+          name: item.organization.name,
+          logo: item.organization.user?.profile_image || '/images/profile/default.jpg'
+        }));
+        setOrganizations(orgsData);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      }
+    };
+    fetchOrgs();
+  }, []);
+
   // Get funds from Redux
   const funds = useSelector((state) => {
     const allFunds = state.fundsReducer.pendingFunds || [];
@@ -54,16 +74,6 @@ const PendingFundListing = () => {
     return allFunds.filter(fund => 
       fund.organization?.id?.toString() === selectedOrganization
     );
-  });
-
-  const organizations = {};
-  funds.forEach(fund => {
-    if (fund.organization) {
-      organizations[fund.organization.id] = {
-        name: fund.organization.name,
-        logo: fund.organization.logo || '/images/logos/logo-afrik-ticket.webp'
-      };
-    }
   });
 
   const handlePageChange = (event, newPage) => {
@@ -111,8 +121,8 @@ const PendingFundListing = () => {
             onChange={handleOrganizationChange}
           >
             <MenuItem value="all">Toutes les organisations</MenuItem>
-            {Object.entries(organizations).map(([id, org]) => (
-              <MenuItem key={id} value={id}>
+            {organizations.map((org) => (
+              <MenuItem key={org.id} value={org.id.toString()}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Avatar src={org.logo} sx={{ width: 24, height: 24 }} />
                   {org.name}

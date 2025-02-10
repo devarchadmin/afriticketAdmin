@@ -1,7 +1,7 @@
 const basicsTableData = [
   {
     id: '1',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     post: 'Web Designer',
     pname: 'Elite Admin',
@@ -104,7 +104,7 @@ const basicsTableData = [
 const EnhancedTableData = [
   {
     id: '1',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     email: 'sunil@gmail.com',
     pname: 'Elite Admin',
@@ -231,7 +231,7 @@ const EnhancedTableData = [
   },
   {
     id: '7',
-    imgsrc: '/images/profile/user-1.jpg',
+    imgsrc: '/images/profile/user-default.jpg',
     name: 'Sunil Joshi',
     email: 'sunil@gmail.com',
     pname: 'Elite Admin',

@@ -45,7 +45,7 @@ export const basicsTableData = [
     {
         id: 1,
         status: 'active',
-        avatar: '/images/profile/user-1.jpg',
+        avatar: '/images/profile/user-default.jpg',
         name: 'Olivia Rhye',
         project: 'Xtreme admin',
         percent: 60,
@@ -72,7 +72,7 @@ export const basicsTableData = [
     {
         id: 4,
         status: 'active',
-        avatar: '/images/profile/user-1.jpg',
+        avatar: '/images/profile/user-default.jpg',
         name: 'Olivia Rhye',
         project: 'Xtreme admin',
         percent: 60,

@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -29,14 +29,8 @@ import {
 } from '@/store/apps/fund/FundSlice';
 import { IconTrash, IconEdit, IconAlertTriangle } from '@tabler/icons-react';
 import FundAdd from './FundAdd';
-
-const organizations = {
-  1: { name: "Fondation Médicale Espoir", logo: "/images/organizations/medical-hope.jpg" },
-  2: { name: "Fondation Éducation pour Tous", logo: "/images/organizations/edu-all.jpg" },
-  3: { name: "Réseau de Secours Mondial", logo: "/images/organizations/global-relief.jpg" },
-  4: { name: "Société Pattes & Soins", logo: "/images/organizations/paws-care.jpg" },
-  5: { name: "Fondation Communautaire Unie", logo: "/images/organizations/united-community.jpg" }
-};
+import FundsFilter from './FundsFilter';
+import { getOrganizations } from '@/app/api/organizations/OrganizationData';
 
 const FundsListing = () => {
   const dispatch = useDispatch();
@@ -44,12 +38,30 @@ const FundsListing = () => {
   const theme = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFund, setSelectedFund] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
 
   const selectedOrganization = useSelector((state) => state.fundReducer.selectedOrganization);
 
   useEffect(() => {
     dispatch(fetchFunds());
   }, [dispatch]);
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      try {
+        const response = await getOrganizations();
+        const orgsData = response.data.map(item => ({
+          id: item.organization.id,
+          name: item.organization.name,
+          logo: item.organization.user?.profile_image || '/images/profile/default.jpg'
+        }));
+        setOrganizations(orgsData);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      }
+    };
+    fetchOrgs();
+  }, []);
 
   const funds = useSelector((state) =>
     getVisibleFunds(
@@ -92,6 +104,8 @@ const FundsListing = () => {
 
   return (
     <Box mt={4}>
+      <FundsFilter />
+
       <Box display="flex" justifyContent="space-between" mb={3}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Organisation</InputLabel>
@@ -101,8 +115,8 @@ const FundsListing = () => {
             onChange={handleOrganizationChange}
           >
             <MenuItem value="all">Toutes les organisations</MenuItem>
-            {Object.entries(organizations).map(([id, org]) => (
-              <MenuItem key={id} value={id}>
+            {organizations.map((org) => (
+              <MenuItem key={org.id} value={org.id.toString()}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Avatar src={org.logo} sx={{ width: 24, height: 24 }} />
                   {org.name}

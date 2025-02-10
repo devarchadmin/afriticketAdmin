@@ -19,21 +19,60 @@ import { AddEvent, UpdateEvent } from '@/store/apps/events/EventsSlice';
 import { format } from 'date-fns';
 import { IconUpload, IconX, IconPhoto } from '@tabler/icons-react';
 import LocationPicker from './LocationPicker';
+import { getOrganizations } from '@/app/api/organizations/OrganizationData';
+import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-const organizations = {
-  1: { name: "EventMaster Pro", logo: "/images/organizations/eventmaster.jpg" },
-  2: { name: "TechConf Solutions", logo: "/images/organizations/techconf.jpg" },
-  3: { name: "Arts & Culture Initiative", logo: "/images/organizations/arts.jpg" },
-  4: { name: "Sports Entertainment Ltd", logo: "/images/organizations/sports.jpg" },
-  5: { name: "Foodie Events Co", logo: "/images/organizations/foodie.jpg" }
-};
+const EVENT_CATEGORIES = [
+  { id: 'festival', name: 'Festival' },
+  { id: 'concert', name: 'Concert' },
+  { id: 'sport', name: 'Sport' },
+  { id: 'art', name: 'Art' },
+  { id: 'education', name: 'Education' },
+  { id: 'technology', name: 'Technology' },
+  { id: 'business', name: 'Business' },
+  { id: 'other', name: 'Other' }
+];
 
 const EventAdd = ({ open, onClose, eventData = null }) => {
   const dispatch = useDispatch();
   const events = useSelector((state) => state.eventReducer.events);
   const newId = events.length > 0 ? Math.max(...events.map((e) => e.Id)) + 1 : 1;
+  
+  const [organizations, setOrganizations] = useState({});
+  const [loadingOrgs, setLoadingOrgs] = useState(true);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoadingOrgs(true);
+        const response = await getOrganizations();
+        
+        const orgsObject = response.data.reduce((acc, item) => {
+          const org = item.organization;
+          if (org.status === 'approved') {
+            acc[org.id] = {
+              name: org.name,
+              logo: org.user?.profile_image || '/images/organizations/default.jpg',
+              email: org.email,
+              phone: org.phone
+            };
+          }
+          return acc;
+        }, {});
+        
+        setOrganizations(orgsObject);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      } finally {
+        setLoadingOrgs(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
 
   const [values, setValues] = useState({
     eventName: '',
@@ -44,8 +83,9 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
     ticketPrice: '',
     description: '',
     images: [],
-    organizationId: '1',
-    organization: organizations[1]
+    organizationId: '',
+    organization: null,
+    category: 'other'
   });
 
   const [imageError, setImageError] = useState('');
@@ -61,8 +101,9 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
         ticketPrice: eventData.ticketPrice || '',
         description: eventData.ticketDescription || '',
         images: eventData.images || [],
-        organizationId: eventData.organizationId?.toString() || '1',
-        organization: eventData.organization || organizations[1]
+        organizationId: eventData.organizationId?.toString() || '',
+        organization: eventData.organization || null,
+        category: eventData.category || 'other'
       });
     } else {
       setValues({
@@ -74,8 +115,9 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
         ticketPrice: '',
         description: '',
         images: [],
-        organizationId: '1',
-        organization: organizations[1]
+        organizationId: '',
+        organization: null,
+        category: 'other'
       });
     }
     setImageError('');
@@ -102,12 +144,16 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
     }));
   };
 
-  const handleOrganizationChange = (event) => {
-    const orgId = event.target.value;
+  const organizationOptions = Object.entries(organizations).map(([id, org]) => ({
+    id,
+    ...org
+  }));
+
+  const handleOrganizationChange = (event, newValue) => {
     setValues(prev => ({
       ...prev,
-      organizationId: orgId,
-      organization: organizations[orgId]
+      organizationId: newValue?.id || '',
+      organization: newValue ? organizations[newValue.id] : null
     }));
   };
 
@@ -125,6 +171,7 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
       images: values.images,
       organizationId: parseInt(values.organizationId),
       organization: values.organization,
+      category: values.category,
       deleted: false,
       status: 'active'
     };
@@ -158,18 +205,58 @@ const EventAdd = ({ open, onClose, eventData = null }) => {
               {/* Organization Selection */}
               <Grid item xs={12}>
                 <FormLabel>Organization</FormLabel>
+                <Autocomplete
+                  fullWidth
+                  options={organizationOptions}
+                  loading={loadingOrgs}
+                  value={organizationOptions.find(org => org.id === values.organizationId) || null}
+                  onChange={handleOrganizationChange}
+                  getOptionLabel={(option) => option.name || ''}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      placeholder="Search organization"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingOrgs ? <CircularProgress size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <MenuItem {...props} component="li">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar 
+                          src={option.logo} 
+                          sx={{ width: 24, height: 24 }}
+                          alt={option.name}
+                        />
+                        {option.name}
+                      </Box>
+                    </MenuItem>
+                  )}
+                  noOptionsText="No organizations found"
+                  disabled={loadingOrgs}
+                />
+              </Grid>
+
+              {/* Category Selection */}
+              <Grid item xs={12}>
+                <FormLabel>Category</FormLabel>
                 <Select
                   fullWidth
                   size="small"
-                  value={values.organizationId}
-                  onChange={handleOrganizationChange}
+                  value={values.category}
+                  onChange={(e) => setValues({ ...values, category: e.target.value })}
                 >
-                  {Object.entries(organizations).map(([id, org]) => (
-                    <MenuItem key={id} value={id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={org.logo} sx={{ width: 24, height: 24 }} />
-                        {org.name}
-                      </Box>
+                  {EVENT_CATEGORIES.map((category) => (
+                    <MenuItem key={category.id} value={category.id}>
+                      {category.name}
                     </MenuItem>
                   ))}
                 </Select>

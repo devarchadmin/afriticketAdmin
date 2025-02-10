@@ -15,7 +15,7 @@ const Contact = () => {
             <Container maxWidth="lg">
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing="16px" justifyContent="center" alignItems="center">
                     <AvatarGroup>
-                        <Avatar alt="Remy Sharp" src='/images/profile/user-1.jpg' sx={{ width: 44, height: 44 }} />
+                        <Avatar alt="Remy Sharp" src='/images/profile/user-default.jpg' sx={{ width: 44, height: 44 }} />
                         <Avatar alt="Travis Howard" src='/images/profile/user-2.jpg' sx={{ width: 44, height: 44 }} />
                     </AvatarGroup>
                     <Typography variant="body1" color="white" fontSize="16px">Save valuable time and effort spent searching for a solution.</Typography>

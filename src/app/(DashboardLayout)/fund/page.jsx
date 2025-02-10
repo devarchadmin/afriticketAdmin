@@ -20,7 +20,7 @@ const Funds = () => {
     <PageContainer title="Fonds | AfrikTicket">
       <Breadcrumb title="Fonds" items={BCrumb} />
       <ChildCard>
-        <FundsFilter />
+        {/* <FundsFilter /> */}
         <FundsListing />
       </ChildCard>
     </PageContainer>

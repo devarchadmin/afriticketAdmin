@@ -24,8 +24,8 @@ const ChipCommon = () => {
                     <InlineItemCard>
                         <Chip avatar={<Avatar>M</Avatar>} label="Default Filled" />
                         <Chip avatar={<Avatar>M</Avatar>} label="Default Deletable" onDelete={handleDelete} />
-                        <Chip avatar={<Avatar alt="Natacha" src={"/images/profile/user-1.jpg"} />} label="Primary Filled" color="primary" />
-                        <Chip avatar={<Avatar alt="Natacha" src={"/images/profile/user-1.jpg"} />} label="Primary Deletable" color="primary" onDelete={handleDelete} />
+                        <Chip avatar={<Avatar alt="Natacha" src={"/images/profile/user-default.jpg"} />} label="Primary Filled" color="primary" />
+                        <Chip avatar={<Avatar alt="Natacha" src={"/images/profile/user-default.jpg"} />} label="Primary Deletable" color="primary" onDelete={handleDelete} />
                         <Chip icon={<IconMoodHappy />} label="Secondary Filled" color="secondary" />
                         <Chip icon={<IconMoodHappy />} label="Secondary Deletable" color="secondary" onDelete={handleDelete} />
                         <Chip avatar={<Avatar alt="Natacha" src={"/images/profile/user-2.jpg"} />} label="Default Filled" color="success" />
@@ -42,8 +42,8 @@ const ChipCommon = () => {
                     <InlineItemCard>
                         <Chip variant="outlined" avatar={<Avatar>M</Avatar>} label="Default Filled" />
                         <Chip variant="outlined" avatar={<Avatar>M</Avatar>} label="Default Deletable" onDelete={handleDelete} />
-                        <Chip variant="outlined" avatar={<Avatar alt="Natacha" src={"/images/profile/user-1.jpg"} />} label="Default Filled" color="primary" />
-                        <Chip variant="outlined" avatar={<Avatar alt="Natacha" src={"/images/profile/user-1.jpg"} />} label="Default Deletable" color="primary" onDelete={handleDelete} />
+                        <Chip variant="outlined" avatar={<Avatar alt="Natacha" src={"/images/profile/user-default.jpg"} />} label="Default Filled" color="primary" />
+                        <Chip variant="outlined" avatar={<Avatar alt="Natacha" src={"/images/profile/user-default.jpg"} />} label="Default Deletable" color="primary" onDelete={handleDelete} />
                         <Chip variant="outlined" icon={<IconMoodHappy />} label="Default Filled" color="secondary" />
                         <Chip variant="outlined" icon={<IconMoodHappy />} label="Default Deletable" color="secondary" onDelete={handleDelete} />
                         <Chip variant="outlined" avatar={<Avatar alt="Natacha" src={"/images/profile/user-2.jpg"} />} label="Default Filled" color="success" />

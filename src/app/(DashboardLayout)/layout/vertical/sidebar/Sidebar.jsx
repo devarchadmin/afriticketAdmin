@@ -1,3 +1,5 @@
+'use client'
+import React, { useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -8,16 +10,40 @@ import { useSelector, useDispatch } from 'react-redux';
 import { hoverSidebar, toggleMobileSidebar } from '@/store/customizer/CustomizerSlice';
 import Scrollbar from '@/app/components/custom-scroll/Scrollbar';
 import { Profile } from './SidebarProfile/Profile';
+import axiosServices from '@/utils/axios';
 
 const Sidebar = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.down('lg'));
   const customizer = useSelector((state) => state.customizer);
   const dispatch = useDispatch();
   const theme = useTheme();
+  const [userData, setUserData] = useState(null);
+
   const toggleWidth =
     customizer.isCollapse && !customizer.isSidebarHover
       ? customizer.MiniSidebarWidth
       : customizer.SidebarWidth;
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axiosServices.get('/user');
+        if (response.data.status === 'success') {
+          setUserData(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const userProfile = {
+    name: userData?.name || 'User',
+    role: userData?.role || 'user',
+    profile_image: userData?.profile_image
+  };
 
   const onHoverEnter = () => {
     if (customizer.isCollapse) {
@@ -29,11 +55,9 @@ const Sidebar = () => {
     dispatch(hoverSidebar(false));
   };
 
-
-
   return (
     <>
-      {!lgUp ?
+      {!lgUp ? (
         <Box
           sx={{
             zIndex: 100,
@@ -44,9 +68,6 @@ const Sidebar = () => {
             }),
           }}
         >
-          {/* ------------------------------------------- */}
-          {/* Sidebar for desktop */}
-          {/* ------------------------------------------- */}
           <Drawer
             anchor="left"
             open
@@ -63,31 +84,18 @@ const Sidebar = () => {
               },
             }}
           >
-            {/* ------------------------------------------- */}
-            {/* Sidebar Box */}
-            {/* ------------------------------------------- */}
-            <Box
-              sx={{
-                height: '100%',
-              }}
-            >
-              {/* ------------------------------------------- */}
-              {/* Logo */}
-              {/* ------------------------------------------- */}
+            <Box sx={{ height: '100%' }}>
               <Box display="flex" alignItems="center" justifyContent="center" marginTop={1}>
                 <a href="/"><img src="/images/logos/logo-afrik-ticket.webp" width={200} alt="Logo" fetchPriority="high" /></a>
               </Box>
               <Scrollbar sx={{ height: 'calc(100% - 190px)' }}>
-                {/* ------------------------------------------- */}
-                {/* Sidebar Items */}
-                {/* ------------------------------------------- */}
-                <SidebarItems />
+                <SidebarItems user={userProfile} />
               </Scrollbar>
-              <Profile />
+              <Profile user={userProfile} />
             </Box>
           </Drawer>
         </Box>
-        :
+      ) : (
         <Drawer
           anchor="left"
           open={customizer.isMobileSidebar}
@@ -101,18 +109,13 @@ const Sidebar = () => {
             },
           }}
         >
-          {/* ------------------------------------------- */}
-          {/* Logo */}
-          {/* ------------------------------------------- */}
           <Box px={2}>
             <Logo />
           </Box>
-          {/* ------------------------------------------- */}
-          {/* Sidebar For Mobile */}
-          {/* ------------------------------------------- */}
-          <SidebarItems />
+          <SidebarItems user={userProfile} />
+          <Profile user={userProfile} />
         </Drawer>
-      }
+      )}
     </>
   );
 };
