@@ -15,9 +15,12 @@ const checkAdminSession = () => {
 };
 
 const initialState = {
+  funds: [],
   pendingFunds: [],
-  fundsSearch: '',
   allFunds: [],
+  currentFilter: 'all_funds',
+  fundSearch: '',
+  selectedOrganization: 'all',
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -36,7 +39,7 @@ const mapFundData = (data) => {
     goal: parseFloat(fund?.goal) || 0,
     currentAmount: parseFloat(fund?.current) || 0,
     status: fund?.status || 'pending',
-    category: fund?.category || '',
+    category: fund?.category || 'other',
     created_at: fund?.created_at || '',
     updated_at: fund?.updated_at || '',
     organization: fund?.organization || null,
@@ -66,7 +69,7 @@ export const FundsSlice = createSlice({
       state.allFunds = action.payload;
     },
     SearchFunds: (state, action) => {
-      state.fundsSearch = action.payload;
+      state.fundSearch = action.payload;
     },
     ApproveFund: (state, action) => {
       const index = state.pendingFunds.findIndex((fund) => fund.id === action.payload);

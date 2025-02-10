@@ -18,23 +18,21 @@ import { useSelector, useDispatch } from 'react-redux';
 import { IconX, IconPhoto } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { AddFund, UpdateFund } from '@/store/apps/funds/FundsSlice';
+import { getOrganizations } from '@/app/api/organizations/OrganizationData';
+import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-const organizations = {
-  1: { name: "EventMaster Pro", logo: "/images/logos/logo-afrik-ticket.webp" },
-  2: { name: "TechConf Solutions", logo: "/images/logos/logo-afrik-ticket.webp" },
-  3: { name: "Arts & Culture Initiative", logo: "/images/logos/logo-afrik-ticket.webp" },
-  4: { name: "Sports Entertainment Ltd", logo: "/images/logos/logo-afrik-ticket.webp" },
-  5: { name: "Foodie Events Co", logo: "/images/logos/logo-afrik-ticket.webp" }
-};
-
 const FUND_CATEGORIES = [
-  { id: 'medical', name: 'Médical' },
-  { id: 'education', name: 'Éducation' },
-  { id: 'disaster', name: 'Catastrophe' },
-  { id: 'community', name: 'Communauté' },
-  { id: 'animals', name: 'Animaux' }
+  { id: 'festival', name: 'Festival' },
+  { id: 'concert', name: 'Concert' },
+  { id: 'sport', name: 'Sport' },
+  { id: 'art', name: 'Art' },
+  { id: 'education', name: 'Education' },
+  { id: 'technology', name: 'Technology' },
+  { id: 'business', name: 'Business' },
+  { id: 'other', name: 'Other' }
 ];
 
 const FundAdd = ({ open, onClose, fundData = null }) => {
@@ -42,15 +40,48 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
   const funds = useSelector((state) => state.fundsReducer.pendingFunds);
   const newId = funds.length > 0 ? Math.max(...funds.map((f) => f.id)) + 1 : 1;
 
+  const [organizations, setOrganizations] = useState({});
+  const [loadingOrgs, setLoadingOrgs] = useState(true);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoadingOrgs(true);
+        const response = await getOrganizations();
+        
+        const orgsObject = response.data.data.reduce((acc, item) => {
+          const org = item.organization;
+          if (org.status === 'approved') {
+            acc[org.id] = {
+              name: org.name,
+              logo: org.user?.profile_image || '/images/organizations/default.jpg',
+              email: org.email,
+              phone: org.phone
+            };
+          }
+          return acc;
+        }, {});
+        
+        setOrganizations(orgsObject);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      } finally {
+        setLoadingOrgs(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
+
   const [values, setValues] = useState({
     title: '',
     description: '',
-    category: 'medical',
+    category: 'other',
     goal: '',
     deadline: '',
     images: [],
-    organizationId: '1',
-    organization: organizations[1]
+    organizationId: '',
+    organization: null
   });
 
   const [imageError, setImageError] = useState('');
@@ -60,23 +91,23 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
       setValues({
         title: fundData.title || '',
         description: fundData.description || '',
-        category: fundData.category || 'medical',
+        category: fundData.category || 'other',
         goal: fundData.goal || '',
         deadline: fundData.deadline ? format(new Date(fundData.deadline), "yyyy-MM-dd") : '',
         images: fundData.images || [],
-        organizationId: fundData.organizationId?.toString() || '1',
-        organization: fundData.organization || organizations[1]
+        organizationId: fundData.organizationId?.toString() || '',
+        organization: fundData.organization || null
       });
     } else {
       setValues({
         title: '',
         description: '',
-        category: 'medical',
+        category: 'other',
         goal: '',
         deadline: '',
         images: [],
-        organizationId: '1',
-        organization: organizations[1]
+        organizationId: '',
+        organization: null
       });
     }
     setImageError('');
@@ -157,27 +188,38 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
             <Grid container spacing={3}>
               {/* Organization Selection */}
               <Grid item xs={12}>
-                <FormLabel>Organisation</FormLabel>
+                <FormLabel>Organization</FormLabel>
                 <Select
                   fullWidth
                   size="small"
                   value={values.organizationId}
                   onChange={handleOrganizationChange}
+                  disabled={loadingOrgs}
                 >
-                  {Object.entries(organizations).map(([id, org]) => (
-                    <MenuItem key={id} value={id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar src={org.logo} sx={{ width: 24, height: 24 }} />
-                        {org.name}
-                      </Box>
+                  {loadingOrgs ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} /> Loading...
                     </MenuItem>
-                  ))}
+                  ) : (
+                    Object.entries(organizations).map(([id, org]) => (
+                      <MenuItem key={id} value={id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar 
+                            src={org.logo} 
+                            sx={{ width: 24, height: 24 }}
+                            alt={org.name}
+                          />
+                          {org.name}
+                        </Box>
+                      </MenuItem>
+                    ))
+                  )}
                 </Select>
               </Grid>
 
               {/* Category Selection */}
               <Grid item xs={12}>
-                <FormLabel>Catégorie</FormLabel>
+                <FormLabel>Category</FormLabel>
                 <Select
                   fullWidth
                   size="small"
