@@ -47,20 +47,29 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
     const fetchOrganizations = async () => {
       try {
         setLoadingOrgs(true);
-        const response = await getOrganizations();
+        // Get total pages from first response
+        const firstResponse = await getOrganizations(1);
+        const totalPages = firstResponse.last_page;
         
-        const orgsObject = response.data.data.reduce((acc, item) => {
-          const org = item.organization;
-          if (org.status === 'approved') {
-            acc[org.id] = {
-              name: org.name,
-              logo: org.user?.profile_image || '/images/organizations/default.jpg',
-              email: org.email,
-              phone: org.phone
-            };
-          }
-          return acc;
-        }, {});
+        // Fetch all pages
+        const allOrganizations = [];
+        for (let page = 1; page <= totalPages; page++) {
+          const response = await getOrganizations(page);
+          allOrganizations.push(...response.data);
+        }
+        
+       const orgsObject = allOrganizations.reduce((acc, item) => {
+         const org = item.organization;
+         if (org.status === 'approved') {
+           acc[org.id] = {
+             name: org.name,
+             logo: org.user?.profile_image || '/images/organizations/default.jpg',
+             email: org.email,
+             phone: org.phone
+           };
+         }
+         return acc;
+       }, {});
         
         setOrganizations(orgsObject);
       } catch (error) {
@@ -175,6 +184,9 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
       maxWidth="md"
       fullWidth
       aria-labelledby="fund-dialog-title"
+      keepMounted
+      disableEnforceFocus
+      disablePortal
     >
       <DialogTitle id="fund-dialog-title" variant="h5">
         {fundData ? 'Update Fund' : 'Create New Fund'}
@@ -189,32 +201,56 @@ const FundAdd = ({ open, onClose, fundData = null }) => {
               {/* Organization Selection */}
               <Grid item xs={12}>
                 <FormLabel>Organization</FormLabel>
-                <Select
+                <Autocomplete
                   fullWidth
-                  size="small"
-                  value={values.organizationId}
-                  onChange={handleOrganizationChange}
                   disabled={loadingOrgs}
-                >
-                  {loadingOrgs ? (
-                    <MenuItem value="">
-                      <CircularProgress size={20} /> Loading...
-                    </MenuItem>
-                  ) : (
-                    Object.entries(organizations).map(([id, org]) => (
-                      <MenuItem key={id} value={id}>
+                  options={Object.entries(organizations).map(([id, org]) => ({
+                    id,
+                    ...org
+                  }))}
+                  loading={loadingOrgs}
+                  getOptionLabel={(option) => option.name || ''}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  value={values.organizationId ? { id: values.organizationId, ...organizations[values.organizationId] } : null}
+                  onChange={(_, newValue) => {
+                    setValues(prev => ({
+                      ...prev,
+                      organizationId: newValue?.id || '',
+                      organization: newValue ? organizations[newValue.id] : null
+                    }));
+                  }}
+                  renderOption={(props, option) => {
+                    const { key, ...otherProps } = props;
+                    return (
+                      <Box component="li" key={key} {...otherProps}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar 
-                            src={org.logo} 
+                          <Avatar
+                            src={option.logo}
                             sx={{ width: 24, height: 24 }}
-                            alt={org.name}
+                            alt={option.name}
                           />
-                          {org.name}
+                          {option.name}
                         </Box>
-                      </MenuItem>
-                    ))
+                      </Box>
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      placeholder="Search organization"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingOrgs ? <CircularProgress size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
                   )}
-                </Select>
+                />
               </Grid>
 
               {/* Category Selection */}

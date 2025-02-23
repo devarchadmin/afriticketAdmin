@@ -1,13 +1,13 @@
 import axiosServices, { getStorageItem } from '../../../utils/axios';
 import { createSlice } from '@reduxjs/toolkit';
 
-const FUNDS_URL = 'https://api.afrikticket.com/api/fundraising';
-const PENDING_FUNDS_URL = 'https://api.afrikticket.com/api/admin/pending/fundraisings';
-const REVIEW_FUND_URL = 'https://api.afrikticket.com/api/admin/fundraisings';
+const FUNDS_URL = '/fundraising';
+const PENDING_FUNDS_URL = '/admin/pending/fundraisings';
+const REVIEW_FUND_URL = '/admin/fundraisings';
 
 // Check store for active admin session
 const checkAdminSession = () => {
-  const adminToken = getStorageItem('adminToken');
+  const adminToken = localStorage.getItem('adminToken');
   if (!adminToken) {
     throw new Error('Admin authentication required');
   }
@@ -29,8 +29,17 @@ const initialState = {
 };
 
 const mapFundData = (data) => {
-  const fund = data.fundraising;
-  const stats = data.stats;
+  // Check if the data is nested (regular fundraising) or flat (pending funds)
+  const fund = data.fundraising || data;
+  const stats = data.stats || {
+    total_donors: (data.donations || []).length,
+    total_raised: (data.donations || []).reduce((sum, d) => sum + parseFloat(d.amount || 0), 0),
+    progress_percentage: parseFloat(data.current || 0) / parseFloat(data.goal || 1) * 100,
+    remaining_amount: Math.max(0, parseFloat(data.goal || 0) - parseFloat(data.current || 0)),
+    average_donation: (data.donations || []).length > 0
+      ? (data.donations || []).reduce((sum, d) => sum + parseFloat(d.amount || 0), 0) / (data.donations || []).length
+      : 0
+  };
   
   return {
     id: fund?.id || '',
@@ -40,8 +49,8 @@ const mapFundData = (data) => {
     currentAmount: parseFloat(fund?.current) || 0,
     status: fund?.status || 'pending',
     category: fund?.category || 'other',
-    created_at: fund?.created_at || '',
-    updated_at: fund?.updated_at || '',
+    created_at: fund?.created_at ? new Date(fund.created_at) : null,
+    updated_at: fund?.updated_at ? new Date(fund.updated_at) : null,
     organization: fund?.organization || null,
     images: fund?.images || [],
     donations: fund?.donations || [],

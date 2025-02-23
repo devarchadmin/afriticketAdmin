@@ -125,14 +125,14 @@ const FundsListing = () => {
             ))}
           </Select>
         </FormControl>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           onClick={handleCreateFund}
           sx={{ px: 3 }}
         >
           + Fonds
-        </Button>
+        </Button> */}
       </Box>
 
       <FundAdd 
